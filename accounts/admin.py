@@ -4,4 +4,5 @@ from .models import Profile,User
 admin.register(Profile)
 admin.register(User)
 
-# # Register your models here.
+# Register your models here.
+print("hello")
