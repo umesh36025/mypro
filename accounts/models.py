@@ -17,8 +17,8 @@ class farm_emp_details(models.Model):
     Role= models.CharField(verbose_name="role",max_length=20)
     Designation=models.CharField(max_length=50,null=True,verbose_name="designation")
     Email_id=models.CharField(max_length=50,verbose_name="email_id")
-    # File=models.FileField()
     Photo_link=models.ImageField(verbose_name="image_link",upload_to="profile_images/",blank=True,null=True,default=None)
+    
 
 
 class infra_emp_details(models.Model):
@@ -46,7 +46,6 @@ class team_manage(models.Model):
     Name=models.CharField(max_length=50,null=False,verbose_name="full_name")
     Role= models.CharField(verbose_name="role",max_length=20)
     Email_id=models.CharField(max_length=50,verbose_name="email_id")
-    # file=models.FileField()
     Photo_link=models.ImageField(verbose_name="image_link",upload_to="profile_images/",blank=True,null=True,default=None)
     
 
@@ -67,7 +66,6 @@ class Profile(models.Model):
         verbose_name = "Employee Profile"
         verbose_name_plural = "Employees Profile"
     
-
     def __str__(self):
         return f"{self.Employee_id.username} - {self.Role}"
     
@@ -78,15 +76,29 @@ class Roles(models.Model):
     class Meta:
         db_table='team_management"."roles'
         verbose_name="role"
-        # verbose_plural_name="roles"
+        verbose_name_plural="roles"
     
 class Designation(models.Model):
     class Meta:
         db_table='team_management"."designations'
         verbose_name="designation"
-        # verbose_plural_name="designations"
+        verbose_name_plural="designations"
         
     designation=models.CharField(max_length=50,unique=True,null=False)
+    
+class Branch(models.Model):
+    branch_id=models.SmallAutoField(primary_key=True,auto_created=True,verbose_name="id",editable=False)
+    branch_name=models.CharField(max_length=25,unique=True,null=False,verbose_name="branch")
+    class Meta:
+        db_table='team_management"."Branches'
+        verbose_name="branch"
+        verbose_name_plural="branches"
+        
+# Branch.objects.create(branch_name="Farm Core")
+# Branch.objects.create(branch_name="Farm Tech")
+# Branch.objects.create(branch_name="Infra Core")
+# Branch.objects.create(branch_name="Infra Tech")
+# Branch.objects.create(branch_name="Technology")
 
 
 

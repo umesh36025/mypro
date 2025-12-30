@@ -8,8 +8,7 @@ class TaskTypes(models.Model):
     class Meta:
         db_table='task_management"."task_types'
         verbose_name="task_types"
-        
-    
+            
 class TaskStatus(models.Model):
     status_id=models.AutoField(primary_key=True,editable=False,auto_created=False,serialize=True)
     status_name=models.CharField(("task_status"), max_length=50,unique=True,default=None,null=False,editable=True)
@@ -17,8 +16,6 @@ class TaskStatus(models.Model):
         db_table='task_management"."task_statuses'
         verbose_name="task_statuses"
     
-
-
 class Task(models.Model):
     task_id=models.BigAutoField(primary_key=True,verbose_name="task_id",auto_created=True)
     title = models.CharField(max_length=200)
@@ -69,10 +66,8 @@ class TaskStatusChangeLogs(models.Model):
         db_table="Task_status_changes_log"
         verbose_name="task_status_change_log"
     
-    
-    
-    
-    
-
-
-# Create your models here.
+# Insert rows into db tables through models instances
+# TaskTypes.objects.create(type_name="1 Day")
+# TaskTypes.objects.create(type_name="10 Day")
+# TaskTypes.objects.create(type_name="Monthly")
+# TaskTypes.objects.create(type_name="Quaterly")

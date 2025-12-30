@@ -1,16 +1,24 @@
 from django.urls import path
 from . import views
 
-urlpatterns = [
+sort_urls=[path("getBranch/",views.get_branches,name="sort"),
+    path("getRoles/",views.get_roles,name="sort"),
+    path("getDesignations/",views.get_designations,name="sort"),]
+
+session_urls=[path('login/', views.user_login),
+            path('logout/', views.user_logout),
+            path('sessiondata/', views.get_session_data),]
+employee_urls=[path('employee/dashboard/', views.employee_dashboard),
+            path('employees/', views.get_all_employees)]
+
+admin_urls= [
     path('', views.home, name='Home'),
-    path('login/', views.user_login, name='login'),
-    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('employee/dashboard/', views.employee_dashboard, name='employee_dashboard'),
-    path('admin/employees/dashboard/', views.employee_dashboard, name='all_employee_dashboard'),
-    path('logout/', views.user_logout, name='logout'),
-    path('admin/updateProfile/', views.update_profile, name='update_profile'),
-    path('admin/createEmployeeLogin/', views.create_employee_login, name='create_profile'),
-    path('admin/deleteEmployee/<str:u>/', views.delete_user_profile, name='delete_profile'),
-    path('admin/employees/dashboard/<str:username>/', views.admin_employee_dashboard_view, name='employee_details'),
+    path('admin/updateProfile/<str:username>/', views.update_profile, name='users'),
+    path('admin/createEmployeeLogin/', views.create_employee_login, name='users'),
+    path('admin/deleteEmployee/<str:u>/', views.delete_user_profile, name='users'),
+    path('admin/viewEmployee/<str:u>/', views.view_employee, name='users'),
 ]
+
+urlpatterns =sort_urls+session_urls+employee_urls+admin_urls
+
 
