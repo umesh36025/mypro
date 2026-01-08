@@ -7,19 +7,22 @@ class TaskTypes(models.Model):
     type_name=models.CharField(unique=True,null=False,max_length=50)
     class Meta:
         db_table='task_management"."task_types'
-        verbose_name="task_types"
-            
+        verbose_name="task_type"
+        verbose_name_plural = "task_types"
+
 class TaskStatus(models.Model):
     status_id=models.AutoField(primary_key=True,editable=False,auto_created=False,serialize=True)
     status_name=models.CharField(("task_status"), max_length=50,unique=True,default=None,null=False,editable=True)
     class Meta:
         db_table='task_management"."task_statuses'
-        verbose_name="task_statuses"
+        verbose_name="task_status"
+        verbose_name_plural = "task_statuses"
+
     
 class Task(models.Model):
     task_id=models.BigAutoField(primary_key=True,verbose_name="task_id",auto_created=True)
-    title = models.CharField(max_length=200)
-    description = models.TextField(max_length=500,verbose_name="task_description",default=None)
+    title = models.CharField(max_length=200,null=False)
+    description = models.TextField(max_length=500,verbose_name="task_description",default=None,null=True)
 
     created_by = models.ForeignKey(
         User,
@@ -42,30 +45,65 @@ class Task(models.Model):
     
     class Meta:
         db_table='task_management"."tasks'
-        verbose_name="tasks"
+        verbose_name="task"
+        verbose_name_plural = "tasks"
 
     def __str__(self):
-        return (self.title,self.task_id)
+        return f"task-id-{self.task_id}"
     
 class TaskCreateAndEditLogs(models.Model):
-    task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="edit_logs")
-    created_at=models.DateField(auto_now_add=True,db_index=True)
-    created_time=models.TimeField(auto_now_add=True)
-    last_edit_time=models.TimeField(auto_now=True)
-    last_edit_date=models.DateField(auto_now=True)
-    class Meta:
-        db_table='Task_create_edit_logs'
-        verbose_name="task_edit_create_log"
+    # task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="edit_logs")
+    # created_at=models.DateField(auto_now_add=True,db_index=True)
+    # created_time=models.TimeField(auto_now_add=True)
+    # last_edit_time=models.TimeField(auto_now=True)
+    # last_edit_date=models.DateField(auto_now=True)
+    # class Meta:
+    #     db_table='Task_create_edit_logs'
+    #     verbose_name="task_edit_create_log"
+    ...
     
 class TaskStatusChangeLogs(models.Model):
-    task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="status_change_log")
-    last_status_change_date=models.DateField(auto_now=True)
-    last_status_change_time=models.TimeField(auto_now=True)
-    status_change_to=models.ForeignKey("task_management.TaskStatus", verbose_name=("change_to"), on_delete=models.CASCADE,db_column="change_to",null=False,related_name="status_change_log")
-    class Meta:
-        db_table="Task_status_changes_log"
-        verbose_name="task_status_change_log"
+    # task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="status_change_log")
+    # last_status_change_date=models.DateField(auto_now=True)
+    # last_status_change_time=models.TimeField(auto_now=True)
+    # status_change_to=models.ForeignKey("task_management.TaskStatus", verbose_name=("change_to"), on_delete=models.CASCADE,db_column="change_to",null=False,related_name="status_change_log")
+    # class Meta:
+    #     db_table="Task_status_changes_log"
+    #     verbose_name="task_status_change_log"
+    ...
     
+class EmployeeTasksCount(models.Model):
+    assignee=models.OneToOneField(User,primary_key=True,db_column="employee_id",to_field="username",on_delete=models.CASCADE)
+    count_sos=models.IntegerField(db_column="total_SOS",default=0,)
+    count_1_Day=models.IntegerField(db_column="total_1_Day",default=0)
+    count_10_Day=models.IntegerField(db_column="total_10_Day",default=0)
+    count_Monthly=models.IntegerField(db_column="total_Monthly",default=0)
+    count_Quaterly=models.IntegerField(db_column="total_Quaterly",default=0)
+    class Meta:
+        db_table='task_management"."employee_tasks_count_by_type'
+        verbose_name="employee_tasks_count_by_type"
+        ordering=["-count_sos","-count_1_Day"]
+        
+class TaskMessage(models.Model):
+    task = models.ForeignKey(
+        Task, on_delete=models.CASCADE, related_name="messages"
+    )
+    sender = models.ForeignKey(
+        User, on_delete=models.CASCADE,db_index=True,db_column="sender",to_field="username",default="753"
+    )
+    message = models.TextField(verbose_name="message",null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # update_at=models.DateTimeField(auto_now=True)
+    seen=models.BooleanField(default=False)
+    
+    class Meta:
+        db_table='task_management"."taskmessaging'
+        verbose_name="taskmessaging"
+        ordering=["sender","-created_at"]
+        
+    def __str__(self):
+        return f"{self.sender.username}: {self.message[:30]}"
+
 # Insert rows into db tables through models instances
 # TaskTypes.objects.create(type_name="1 Day")
 # TaskTypes.objects.create(type_name="10 Day")
