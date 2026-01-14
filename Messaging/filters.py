@@ -68,9 +68,10 @@ def get_messages(request:HttpRequest,chat_id:str):
         except Http404 as e:
             print(e)
             is_group=False
+            # return JsonResponse({"message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
         finally:
             if is_group:
-                participants=GroupMembers.objects.filter(group_chat=group_obj).select_related("participant","participant__accounts_profile__Name")
+                participants=GroupMembers.objects.filter(groupchat=group_obj).select_related("participant")
                 Flag=False
                 try:
                     for i in participants:
@@ -84,11 +85,17 @@ def get_messages(request:HttpRequest,chat_id:str):
                     messages= GroupMessages.objects.filter(group=group_obj).order_by("-created_at")
                     GroupMembers.objects.filter(groupchat=group_obj,participant=request.user).update(seen=True)
             else:
-                messages=IndividualMessages.objects.filter(chat_id=chat_id).order_by("-created_at")
+                try:
+                    chat_obj=get_object_or_404(IndividualChats,chat_id=chat_id)
+                except Http404 as e:
+                    print(e)
+                    return JsonResponse({"message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
+                else:
+                    messages=IndividualMessages.objects.filter(chat=chat_obj).order_by("-created_at")
 
         data = [
             {
-                # "sender": m.sender.accounts_profile.Name,
+                "sender": get_users_Name(m.sender),
                 "message": m.content,
                 "date":m.created_at.strftime("%d/%m/%y"),
                 "time": m.created_at.strftime("%H:%M"),

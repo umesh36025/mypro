@@ -97,6 +97,12 @@ def get_designations_by_branch(request: HttpRequest):
 def get_role_wise_count(request:HttpRequest):
     ...
     
+def get_users_Name(user:User):
+    profile_obj=get_user_profile_object(user)
+    if isinstance(profile_obj,Profile):
+        return profile_obj.Name
+    else:
+        return None
 # to verify POST request
 # use in the view that has been passed in the respective path function of the requested url.
 def verifyPost(request: HttpRequest):

@@ -13,10 +13,11 @@ employee_urls=[path('employee/dashboard/', views.employee_dashboard),
 
 admin_urls= [
     path('', views.home, name='Home'),
-    path('admin/updateProfile/<str:username>/', views.update_profile, name='users'),
+    path('admin/updateProfile/<slug:username>/', views.update_profile, name='users'),
     path('admin/createEmployeeLogin/', views.create_employee_login, name='users'),
-    path('admin/deleteEmployee/<str:u>/', views.delete_user_profile, name='users'),
-    path('admin/viewEmployee/<str:u>/', views.view_employee, name='users'),
+    path('admin/deleteEmployee/<slug:u>/', views.delete_user_profile, name='users'),
+    path('admin/viewEmployee/<slug:u>/', views.view_employee, name='users'),
+    path('admin/changePassword/<slug:u>/', views.changePassword, name='users'),
 ]
 
 urlpatterns =sort_urls+session_urls+employee_urls+admin_urls

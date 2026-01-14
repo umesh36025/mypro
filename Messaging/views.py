@@ -12,6 +12,7 @@ def access_or_create_conversation(request: HttpRequest):
         if verify_method:
             return verify_method
         data=load_data(request)
+        print(data)
         try:
             user1=User.objects.get(username=data.get("participant"))
             user2=request.user
@@ -23,8 +24,10 @@ def access_or_create_conversation(request: HttpRequest):
         else:
             object,is_created=IndividualChats.get_or_create_indivisual_Chat(user1=user1,user2=user2)
             if not is_created:
-                messages=[{}]
-                return JsonResponse(list(messages),safe=False)
+                chat_details={"chat_id":object.chat_id,
+                          "participant":object.get_other_participant(request.user),
+                          "messages":{}}
+                return JsonResponse(list(chat_details),safe=False)
             else:
                 messages=get_messages(request,chat_id=object.chat_id)
                 return messages
@@ -246,6 +249,7 @@ def post_message(request,chat_id:str):
         return verify_method
     sender=request.user
     data=load_data(request)
+    print(data)
     message=data.get("Message")
     if not message:
         return JsonResponse({"message":"Message is empty"},status=status.HTTP_204_NO_CONTENT)
@@ -291,7 +295,13 @@ def load_groups_and_chats(request: HttpRequest):
         "group_name":g.groupchat.group_name,
         "description":g.groupchat.description
     } for g in groups]
-    return JsonResponse(groups_info,safe=False)
+    chats_info=[{
+        "chat_id":c.chat_id,
+        "with":get_users_Name(c.get_other_participant(request.user))
+    } for c in chats]
+    response={"Group_info":groups_info,"chats_info":chats_info}
+    return JsonResponse(response,safe=False)
+
 # Create your views here.
 
 @login_required

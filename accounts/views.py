@@ -102,7 +102,10 @@ def create_employee_login(request: HttpRequest):
 def get_all_employees(request: HttpRequest):
         role=get_user_role(user=request.user)
         profile_data=Profile.objects.filter().select_related("Role","Designation","Branch")
-        profile_data=[{"Employee_id":pd.Employee_id.username,
+        users_data=[]
+        for pd in profile_data:
+            if pd.Role.role_name!="MD":
+                user={"Employee_id":pd.Employee_id.username,
                       "Name":pd.Name,
                       "Role":pd.Role.role_name,
                       "Branch":pd.Branch.branch_name,
@@ -110,9 +113,20 @@ def get_all_employees(request: HttpRequest):
                       "Date_of_birth":pd.Date_of_birth,
                       "Date_of_join":pd.Date_of_join,
                       "Email_id":pd.Email_id,
-                      "Photo_link":pd.Photo_link.url
-                        } for pd in profile_data if pd.Role.role_name!="MD"]
-        return  JsonResponse(profile_data,safe=False)
+                      "Photo_link":pd.Photo_link.url}
+                users_data.append(user)
+            else:
+                user={"Employee_id":pd.Employee_id.username,
+                      "Name":pd.Name,
+                      "Role":pd.Role.role_name,
+                      "Branch":None,
+                      "Designation":None,
+                      "Date_of_birth":pd.Date_of_birth,
+                      "Date_of_join":pd.Date_of_join,
+                      "Email_id":pd.Email_id,
+                      "Photo_link":pd.Photo_link.url}
+                users_data.append(user)
+        return  JsonResponse(users_data,safe=False)
 
 # get the session data of a logged_in user.
 @login_required
@@ -147,7 +161,6 @@ def user_login(request:HttpRequest):
             p=data.get('password')
     else: 
         return verify_method
-    
     try:
         if not u or not p:
             return JsonResponse({"message":"username or password is missing"},status=status.HTTP_204_NO_CONTENT)
@@ -157,18 +170,17 @@ def user_login(request:HttpRequest):
             if not user:
                     return  JsonResponse({"messege":"Incorrect userID/Password,Try again"},status=status.HTTP_406_NOT_ACCEPTABLE)
             else:
-                    login(request,user)
-                    if not user.is_superuser:
-                        user_role=get_user_role(user)
-                        if isinstance(user_role,str):
-                            return  JsonResponse({"messege":"You are logged in","username":f"{request.user.username}","Role":user_role},status=status.HTTP_200_OK)
-                            # return JsonResponse({"message":"login successfull"})
-                        else:
-                            return JsonResponse(user_role,status=status.HTTP_404_NOT_FOUND)
-                    else:
-                        return  JsonResponse({"messege":"You are logged in","username":f"{request.user.username}","Role":"Admin"},status=status.HTTP_200_OK)
+                login(request,user)
+                user_role=get_user_role(user)
+                if isinstance(user_role,str):
+                    return  JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":user_role},status=status.HTTP_200_OK)
+                elif user.is_superuser:
+                    return  JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":"Admin"},status=status.HTTP_200_OK)
+                else:
+                    return JsonResponse(user_role,status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-                return JsonResponse({"messege":f"{e}"})
+                    return JsonResponse({"messege":f"{e}"})
+
 # Get logged_in users Profile data
 @login_required
 def employee_dashboard(request: HttpRequest):
@@ -182,84 +194,112 @@ def employee_dashboard(request: HttpRequest):
 # Logout the logged_in user and delete the sessions.
 @login_required
 def user_logout(request: HttpRequest):
+    user_id=request.user.username
     logout(request)
     request.session.flush()
-    return  JsonResponse({"messege":"Logout successfully"},status=status.HTTP_200_OK)
+    return  JsonResponse({"messege":f"Logout successfully {user_id}"},status=status.HTTP_200_OK)
 
 #Update particular user profile using his/her username.
 @csrf_exempt
 @admin_required
 def update_profile(request: HttpRequest,username):
-    if request.method in ['POST']:
+    verify_method=verifyPost(request)
+    if verify_method:
+        return verify_method
+    try:
+        user=get_object_or_404(User,username=username)
+        profile=Profile.objects.get(Employee_id=user)
+    except Http404 as e:
+        print(e)
+        return JsonResponse({"messege":"User Not Found. Incorrect Username Passed in the URL"},status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(e)
+        return  JsonResponse({"messege":"User Profile is missing."},status=status.HTTP_404_NOT_FOUND) 
+    else:
         fields=['password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link']
+        not_required_fields=["Designation","Branch","password","Photo_link"]
         login_values={}
         profile_values={}
         try:
-                data=request.POST
-                files=request.FILES
-                for i in fields:
-                    if i!= "Photo_link":
-                        field_value=data.get(i)
-                    else:
-                        field_value=files.get(i)
-                    if not field_value and i!="Designation" and i!="Branch":
-                        return JsonResponse({"messege":f"{i} is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
-                    elif i=="Designation" and not data.get(i):
-                        ...
-                    elif i=="Branch" and not data.get(i):
-                        ...
-                    elif i=='password':
-                        login_values[i]=field_value
-                    elif i == 'Email_id':
-                        login_values["email"]=field_value
-                        profile_values[i]=field_value
-                    else:
-                        profile_values[i]=field_value
+            data=request.POST
+            files=request.FILES
+            for i in fields:
+                if i!= "Photo_link":
+                    field_value=data.get(i)
+                else:
+                    field_value=files.get(i)
+                if not field_value and not(i in not_required_fields):
+                    print("error1")
+                    return JsonResponse({"messege":f"{i} is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
+                elif i in not_required_fields and not field_value:
+                    ...
+                elif i=="password" and field_value:
+                    setattr(user,"password",field_value)
+                    user.set_password(field_value)
+                elif i == 'Email_id':
+                    setattr(user,'email',field_value)
+                    profile_values[i]=field_value
+                else:
+                    profile_values[i]=field_value
+            print(profile_values)
         except Exception as e:
+            print(e)
             return  JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            try:
-                user=User.objects.get(username=username)
-            except Exception as e:
-                return  JsonResponse({"messege":"User Not Found. Incorrect Username Passed in the URL"},status=status.HTTP_404_NOT_FOUND) 
-            else:
-                profile=Profile.objects.get(Employee_id=user)
-        try:    
-            setattr(user,'password',login_values['password'])
-            setattr(user,'email',login_values['email'])
-            user.set_password(login_values['password'])
-            user.save()
-            if profile.Photo_link:
+            photo= profile_values.pop("Photo_link",None)
+            if profile.Photo_link and photo:
                 profile.Photo_link.delete(save=True)
-        except Exception as e:
-            return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
-        else:
-            if data.get("Branch") and data.get("Designation"):
-                    get_branch=get_branch_object(branch=profile_values["Branch"])
-                    if isinstance(get_branch,Branch):
-                        profile_values["Branch"]=get_branch
+                profile.Photo_link=photo
+                profile.save(force_update=True)
+            try:
+                    if data.get("Branch") and data.get("Designation"):
+                            get_branch=get_branch_object(branch=profile_values["Branch"])
+                            if isinstance(get_branch,Branch):
+                                profile_values["Branch"]=get_branch
+                            else:
+                                return JsonResponse(get_branch,safe=False)
+                        
+                            get_designation=get_designation_object(designation=profile_values["Designation"])
+                            if isinstance(get_designation,Designation):
+                                profile_values["Designation"]=get_designation
+                            else:
+                                return JsonResponse(get_designation,safe=False)
+                            
+                    get_role=get_role_object(role=profile_values["Role"])
+                    if isinstance(get_role,Roles):
+                        profile_values["Role"]=get_role
                     else:
-                        return JsonResponse(get_branch,safe=False)
-                
-                    get_designation=get_designation_object(designation=profile_values["Designation"])
-                    if isinstance(get_designation,Designation):
-                        profile_values["Designation"]=get_designation
-                    else:
-                        return JsonResponse(get_designation,safe=False)
-                    
-            get_role=get_role_object(role=profile_values["Role"])
-            if isinstance(get_role,Roles):
-                profile_values["Role"]=get_role
+                        print(get_role)
+                        return JsonResponse(get_role,safe=False)
+                    user.save()
+                    Profile.objects.filter(Employee_id=user).update(**profile_values)
+            except Exception as e:
+                    print(e)
+                    return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
             else:
-                return JsonResponse(get_role,safe=False)
-            # profile_values["Branch"]=get_branch_object(branch=profile_values["Branch"])
-            # profile_values["Designation"]=get_designation_object(designation=profile_values["Designation"])
-            # profile_values["Role"]=get_role_object(role=profile_values["Role"])  
-            updated_profile=Profile.objects.filter(Employee_id=user).update(**profile_values)
-            return  JsonResponse({"messege":"user details update successfully"},status=status.HTTP_205_RESET_CONTENT)
+                    return  JsonResponse({"messege":"user details update successfully"},status=status.HTTP_205_RESET_CONTENT)
+
+@csrf_exempt
+@login_required
+def changePassword(request: HttpRequest,u):
+    verify_method=verifyPatch(request)
+    if verify_method:
+        return verify_method
+    data=load_data(request)
+    new_password=data.get("new_password")
+    if not new_password:
+        return JsonResponse({"messege":"Password is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
+    try:
+        user=get_object_or_404(User,username=u)
+    except Http404 as e:
+        print(e)
+        return  JsonResponse({"messege":f"{e}"})
     else:
-        return  JsonResponse({"messege":"Request method must be 'POST'"},status=status.HTTP_400_BAD_REQUEST)
-            # ...
+        user.password=new_password
+        user.set_password(new_password)
+        user.save(force_update=True)
+        return JsonResponse({"messege":f"Password is changed to {new_password}"},status=status.HTTP_200_OK)
+
 # View Individual Employee Profile. 
 @admin_required
 def view_employee(request: HttpRequest,u):
@@ -277,10 +317,12 @@ def view_employee(request: HttpRequest,u):
 def delete_user_profile(request: HttpRequest,u):
     if request.method=='DELETE':
         try:
-            user=get_user_object(username=u)
-        except:
+            user=get_object_or_404(User,username=u)
+        except Http404 as e:
+            print(e)
             return JsonResponse({"Message":"User not found.Incorrect username"},status=status.HTTP_404_NOT_FOUND)
-        else: 
+        else:
+            # profile=get_user_profile_object(Profile,Employee_id=user)
             user.delete()
             return JsonResponse({"message":"user deleted successfully"})
     else:

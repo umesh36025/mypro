@@ -24,6 +24,7 @@ def create_task(request:HttpRequest):
     data=load_data(request)
     required_fields=["title","description","due_date","assigned_to","type"]
     body_data={}
+    participant=[]
     # print("error2")
     for i in required_fields:
         field_value=data.get(i)
@@ -33,22 +34,33 @@ def create_task(request:HttpRequest):
         body_data[i]=data.get(i)
     # print(body_data)
     try:
-        body_data["type"]=TaskTypes.objects.get(type_name=body_data["type"])
-        u_profile= Profile.objects.get(Name=body_data["assigned_to"])
-        body_data["assigned_to"]=u_profile.Employee_id
+        body_data["type"]=get_object_or_404(TaskTypes,type_name=body_data["type"])
         body_data["created_by"]=request.user
+        assignees=body_data["assigned_to"]
+        # body_data["assigned_to"]=u_profile.Employee_id
+    except Http404 as e:
+        print(e)
+        return JsonResponse({"message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
     except Exception as e:
         # print(e)
         return JsonResponse({"message":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)
     else:
         try:
+            body_data.pop("assigned_to")
+            print(body_data)
             task = Task.objects.create(**body_data)
-            task.save()
+            for userid in assignees:
+                    user= get_object_or_404(User,username=userid)
+                    TaskAssignies.objects.create(task=task,assigned_to=user)
             # print("error 5")
             return JsonResponse({"message": "Task created"},status=status.HTTP_201_CREATED) 
         except Exception as e:
-            # print(e)
+            print(e)
             return JsonResponse({"message":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)
+        except Http404 as e:
+            print(e)
+            return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+            
         
 # Update a particular Task. applicable method-"POST",insert path parameter "task_id" of type integer. 
 # endpoint-{{baseurl}}/tasks/{task_id}/updateTask/
@@ -136,14 +148,14 @@ def show_assigned_tasks(request: HttpRequest):
 # endpoint-{{baseurl}}/tasks/{id}/changeStatus/
 @login_required
 @csrf_exempt
-def change_status(request: HttpRequest,id):
+def change_status(request: HttpRequest,task_id):
     request_method=verifyPatch(request)
     if request_method:
         return request_method
     data=load_data(request)
     changed_to:str=data.get("change_Status_to")
     try:
-        task=get_task_object(task_id=id)
+        task=get_task_object(task_id=task_id)
         changed_status=get_taskStatus_object(status_name=changed_to.upper())
         setattr(task,"status",changed_status)
         task.save()
@@ -172,7 +184,7 @@ def delete_task(request: HttpRequest,task_id:int):
         return JsonResponse({"message":f"{e}"})
     else:
         task.delete()
-        return JsonResponse({"Message":f"task-id {task_id} deleted successfully"},status=status.HTTP_201_CREATED)
+        return JsonResponse({"Message":f"task-task_id {task_id} deleted successfully"},status=status.HTTP_201_CREATED)
     
 ####################################### Messaging (API)#####################################################
 
@@ -214,8 +226,10 @@ def get_task_messages(request: HttpRequest, task_id:int):
     else:
         try:
             task:Task= get_object_or_404(Task, task_id=task_id)
-            if not(request.user!=task.created_by or request.user!=task.assigned_to):
-                raise PermissionDenied("Not allowed")
+            assignees=TaskAssignies.objects.filter(task=task_id)
+            for i in assignees:
+                if not(request.user!=task.created_by or request.user!=i.assigned_to):
+                    raise PermissionDenied("Not allowed")
         except PermissionDenied:
             return JsonResponse({"message":"you are not authorised to accessed this task conversation"},status=status.HTTP_403_FORBIDDEN)
         else:

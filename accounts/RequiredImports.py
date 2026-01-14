@@ -1,6 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from accounts.filters import *
-from django.http import HttpResponse,HttpRequest,JsonResponse
+from django.http import HttpResponse,HttpRequest,JsonResponse,Http404
 from django.contrib.auth import authenticate, login,logout
 from django.shortcuts import render, redirect
 from accounts.models import *

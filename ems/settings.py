@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     "accounts",
     "task_management",
     "Messaging",
-    # "channels"
+    # "channels",
+    "maintenance",
     # 'accounts.apps.AccountsConfig',
 ]
 

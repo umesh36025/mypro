@@ -2,6 +2,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from accounts.models import Profile, Roles,Designation
 from django.db.models import Q,F
 from accounts.views import status
+from accounts.filters import get_user_profile_object
 from task_management.models import *
 from accounts.filters import get_role_object,get_designation_object
 
@@ -12,7 +13,6 @@ def get_task_object(task_id:int):
     try:
         task=Task.objects.get(task_id=task_id)
     except Exception as e:
-        print(e)
         return None
     else:
         return task
@@ -22,7 +22,6 @@ def get_taskTypes_object(type_name:str):
     try:
         type=TaskTypes.objects.get(type_name=type_name)
     except Exception as e:
-        print(e)
         return None
     else:
         return type
@@ -32,7 +31,6 @@ def get_taskStatus_object(status_name:str):
     try:
         status_object=TaskStatus.objects.get(status_name=status_name)
     except Exception as e:
-        print(e)
         return None
     else:
         return status_object
@@ -73,36 +71,84 @@ def get_types(request: HttpRequest):
     task_types=TaskTypes.objects.all().values("type_name")
     return JsonResponse(list(task_types),safe=False)
 
+def get_assignees(task:Task):
+    try:
+        assignees=TaskAssignies.objects.filter(task=task).select_related("assigned_to").annotate(assignee=F("assigned_to__accounts_profile__Name")).values("assignee")
+    except Exception as e:
+        return None
+    else:
+        return assignees
+    
 # Fetch tasks by its types
 # endpoint for "Created_Tasks"-{{baseurl}}/tasks/viewTasks/?type= 
 # endpoint for "Assigned_Reported"-{{baseurl}}/tasks/viewAssignedTasks/?type= 
 def get_tasks_by_type(request:HttpRequest,type:str="all",self_created: bool=True):
-    if type.lower()=="all" and not self_created:
-        tasks=Task.objects.filter(assigned_to=request.user).select_related("type","status","created_by").annotate(task_type=F("type__type_name"),
-            current_status=F("status__status_name"),created=F("created_by__accounts_profile__Name")).order_by("-task_id").values("task_id","title","description","due_date",
-                    "task_type","created","current_status")
-        return list(tasks)
     
-    elif type.lower()=="all" and self_created:
-        tasks=Task.objects.filter(created_by=request.user).select_related("type","status","assigned_to").annotate(task_type=F("type__type_name"),
-            current_status=F("status__status_name"),assigned=F("assigned_to__accounts_profile__Name")).order_by("-task_id").values("task_id","title","description","due_date",
-                    "task_type","assigned","current_status")
-        return list(tasks)
-    
-    elif type and not self_created:
-        type_obj=TaskTypes.objects.get(type_name=type)
-        tasks=Task.objects.filter(type=type_obj,assigned_to=request.user).select_related("type","status","created_by").annotate(task_type=F("type__type_name"),
-            current_status=F("status__status_name"),created=F("created_by__accounts_profile__Name")).order_by("-task_id").values("task_id","title","description","due_date",
-                    "task_type","created","current_status")
-        return list(tasks)
+    if type.lower()=="all" and self_created:
+        tasks=Task.objects.filter(created_by=request.user)
+        task_data=[]
+        for t in tasks:
+            sample={
+                "task_id":t.task_id,
+                "title":t.title,
+                "description":t.description,
+                "status":t.status.status_name,
+                "due-date":t.due_date.strftime("%d/%m/%Y"),
+                "assignees":list(get_assignees(task=t)),
+                "type":t.type.type_name,
+            }
+            task_data.append(sample)
+        return task_data
     
     elif type and self_created:
         type_obj=TaskTypes.objects.get(type_name=type)
-        tasks=Task.objects.filter(type=type_obj,created_by=request.user).select_related("type","status","assigned_to").annotate(task_type=F("type__type_name"),
-            current_status=F("status__status_name"),assigned=F("assigned_to__accounts_profile__Name")).order_by("-task_id").values("task_id","title","description","due_date",
-                    "task_type","assigned","current_status")
-        return list(tasks)
+        tasks=Task.objects.filter(created_by=request.user,type=type_obj)
+        task_data=[]
+        for t in tasks:
+            sample={
+                "task_id":t.task_id,
+                "title":t.title,
+                "description":t.description,
+                "status":t.status.status_name,
+                "due-date":t.due_date.strftime("%d/%m/%Y"),
+                "assignees":list(get_assignees(task=t)),
+                "type":t.type.type_name,
+            }
+            task_data.append(sample)
+        return task_data
+    
+    elif type.lower()=="all" and not self_created:
+        assignees=TaskAssignies.objects.filter(assigned_to=request.user)
+        task_data=[]
+        for user in assignees:
+            sample={
+                "task_id":user.task.task_id,
+                "title":user.task.title,
+                "description":user.task.description,
+                "status":user.task.status.status_name,
+                "created_by":get_user_profile_object(user.task.created_by).Name,
+                "due-date":user.task.due_date.strftime("%d/%m/%Y"),
+            }
+            task_data.append(sample)
+        return task_data
+    
+    elif type and not self_created:
+        assignees=TaskAssignies.objects.filter(assigned_to=request.user)
+        task_data=[]
+        for user in assignees:
+            if user.task.type.type_name==type:
+                sample={
+                    "task_id":user.task.task_id,
+                    "title":user.task.title,
+                    "description":user.task.description,
+                    "status":user.task.status.status_name,
+                    "created_by":get_user_profile_object(user.task.created_by).Name,
+                    "due-date":user.task.due_date.strftime("%d/%m/%Y"),
+                }
+                task_data.append(sample)
+        return task_data
 
     else:
         tasks=[{"message":"Incorrect type for tasks"}]
-    return tasks
+    
+    return JsonResponse(tasks,safe=False,status=status.HTTP_200_OK)
