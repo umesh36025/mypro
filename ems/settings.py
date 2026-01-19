@@ -22,7 +22,7 @@ load_dotenv(f"{BASE_DIR}/.env")
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8aa_+4cmt5z@+b6p9j_76n)t_+ah_3&%(zq9zj5a*5576*mwah'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -116,7 +116,7 @@ DATABASES =  {
         "HOST": os.getenv("POSTGRES_HOST"),
         "PORT": os.getenv("POSTGRES_PORT"),
         "OPTIONS":{
-            'options':'-c search_path=messaging,task_management,login_details,team_farm,team-infra,team_interns,team_management,public'
+            'options':'-c search_path=login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
         }
     }
 }
