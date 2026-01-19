@@ -117,7 +117,8 @@ DATABASES =  {
         "PORT": os.getenv("POSTGRES_PORT"),
         "OPTIONS":{
             'options':'-c search_path=login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
-        }
+        },
+         'CONN_MAX_AGE': 60
     }
 }
 #
@@ -194,3 +195,16 @@ CORS_ALLOW_HEADERS = [
     
 SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
+
+# LOGGING = {
+#     "version": 1,
+#     "handlers": {
+#         "console": {"class": "logging.StreamHandler"},
+#     },
+#     "loggers": {
+#         "django.db.backends": {
+#             "handlers": ["console"],
+#             "level": "DEBUG",
+#         },
+#     },
+# }

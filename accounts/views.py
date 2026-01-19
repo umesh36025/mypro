@@ -13,7 +13,7 @@ def home(request: HttpRequest):
 @csrf_exempt
 @admin_required
 def create_employee_login(request: HttpRequest):
-    fields=['Employee_id','password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link']
+    fields=['Employee_id','password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link',"Department"]
     login_values={}
     profile_values={}
     try:
@@ -26,12 +26,14 @@ def create_employee_login(request: HttpRequest):
                     else:
                         field_value=files.get(i)
                     
-                    if not field_value and i!="Designation" and i!="Branch":
+                    if not field_value and i!="Designation" and i!="Branch" and i!="Department":
                         print("error1")
                         return JsonResponse({"messege":f"{i} is required"},status=status.HTTP_406_NOT_ACCEPTABLE)
                     elif i=="Designation" and not data.get(i):
                         ...
                     elif i=="Branch" and not data.get(i):
+                        ...
+                    elif i=="Department" and not data.get(i):
                         ...
                     elif i=='Employee_id':
                         login_values["username"]=str(field_value)
@@ -52,7 +54,7 @@ def create_employee_login(request: HttpRequest):
     else:
         try:
             # profile_values.update(login_values)
-            print(profile_values)
+            # print(profile_values)
             check_user=User.objects.filter(username=login_values["username"]).first()
             if not check_user:
                 user = User(**login_values)
@@ -81,6 +83,12 @@ def create_employee_login(request: HttpRequest):
                     else:
                         print(get_designation)
                         return JsonResponse(get_designation,safe=False)
+                    
+                    get_department=get_department_obj(dept=profile_values["Department"])
+                    if isinstance(get_department,Departments):
+                        profile_values["Department"]=get_department
+                    else:
+                        return get_department
                     
                 # foreign key reference to Role in the table Profile
                 get_role=get_role_object(role=profile_values["Role"])
@@ -241,7 +249,7 @@ def update_profile(request: HttpRequest,username):
                     profile_values[i]=field_value
                 else:
                     profile_values[i]=field_value
-            print(profile_values)
+            # print(profile_values)
         except Exception as e:
             print(e)
             return  JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)

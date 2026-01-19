@@ -3,7 +3,8 @@ from django.db import models
 from django.contrib.auth.models import BaseUserManager,AbstractUser,AbstractBaseUser
 from enum import Enum
 from django.contrib.auth.models import User
-from django.core.validators import validate_email
+from django.core.validators import MinValueValidator, MaxValueValidator,validate_email
+from datetime import date
 
 # class farm_emp_details(models.Model):
     # class Meta:
@@ -85,7 +86,7 @@ class Profile(models.Model):
     Date_of_birth=models.DateField(verbose_name="date_of_birth",auto_now=False, auto_now_add=False,null=True)
     Photo_link=models.ImageField(verbose_name="image_link", upload_to="profile_images/", height_field=None, width_field=None, max_length=None,null=True,blank=True)
     Date_of_join=models.DateField(verbose_name="date_of_joining",auto_now=False, auto_now_add=False,null=True)
-    
+    Department=models.ForeignKey("Departments",verbose_name="department",db_column="department",on_delete=models.CASCADE,related_name="department",null=True)
     class Meta:
         verbose_name = "Employee Profile"
         verbose_name_plural = "Employees Profile"
@@ -114,17 +115,107 @@ class management_Profile(models.Model):
     def __str__(self):
         return f"{self.Role.role_name}-{self.Name}"
     
-# Roles.objects.filter(role_name="Admin").update(role_name="ADMIN")        
-# Roles.objects.filter(role_name="MD").update(role_name="MD")        
-# Roles.objects.filter(role_name="Employee").update(role_name="EMPLOYEE")        
-# Roles.objects.filter(role_name="Intern").update(role_name="INTERN")        
-# Roles.objects.filter(role_name="TeamLead").update(role_name="TEAMLEAD")        
+class Departments(models.Model):
+    dept_name=models.CharField(max_length=50,unique=True,null=False)
+    count=models.SmallIntegerField(default=0)
+    
+    @classmethod
+    def add_department(cls,dept_name:str):
+        obj=cls.objects.create(dept_name=dept_name)
+        return obj 
+    
+    class Meta:
+        db_table= 'team_management"."Departments'
+        verbose_name_plural = "departments"
+        ordering=["dept_name"]
+
+    ...
+    
+class Quaters(models.Model):
+    quater=models.CharField(max_length=20,null=False,primary_key=True)
+    # starting_month=models.IntegerField(null=True)
+    # ending_month=models.IntegerField(null=True)
+    start_month=models.IntegerField(null=True)
+    end_month=models.IntegerField(null=True)
+    
+    @classmethod
+    def create_quater(cls,quater:str,starting_month:int,ending_month:int):
+        obj=cls.objects.create(quater=quater,start_month=starting_month,end_month=ending_month)
+        return obj
+    
+    class Meta:
+        db_table= 'team_management"."Quaters'
+        verbose_name_plural = "quaters"
+        ordering=["quater"]
+    
+class Financial_years_Quaters_Mapping(models.Model):
+    Quater=models.ForeignKey(Quaters,on_delete=models.CASCADE,db_column="quater",related_name="current_quater")
+    financial_year_start=models.IntegerField()
+    financial_year_end=models.IntegerField()
+    
+    @classmethod
+    def add_quaterwise_year(cls,quater:Quaters,financial_year_start:int,financial_year_end:int):
+        obj=cls.objects.create(Quater=quater,financial_year_start=financial_year_start,financial_year_end=financial_year_end)
+        return obj 
+    class Meta:
+        db_table= 'team_management"."Financial_year_with_Quaters'
+    
+class Monthly_department_head_and_subhead(models.Model):
+    department=models.ForeignKey(Departments,on_delete=models.CASCADE,null=False,related_name="dapartment",db_column="department")
+    quater_with_financial_year=models.ForeignKey(Financial_years_Quaters_Mapping,on_delete=models.CASCADE,null=False,related_name="quater",db_column="quater")
+    month_of_the_quater=models.SmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(3)])
+    Meeting_head=models.CharField(max_length=100,null=False)
+    meeting_sub_head=models.CharField(max_length=100,null=True)
+    Sub_Head_D1=models.CharField(max_length=100,null=True)
+    Sub_Head_D2=models.CharField(max_length=100,null=True)
+    Sub_Head_D3=models.CharField(max_length=100,null=True)
+    
+    
+    @classmethod
+    def create_head_and_subhead_for_each_dept(cls,dept:Departments,quater_with_financial_year:Financial_years_Quaters_Mapping,month_of_quater:int,meeting_head:str,meeting_sub_head:str,Sub_Head_D1:str,Sub_Head_D2:str,Sub_Head_D3:str):
+        obj=cls.objects.create(department=dept,quater_with_financial_year=quater_with_financial_year,month_of_quater=month_of_quater,meeting_head=meeting_head,Sub_Head_D1=Sub_Head_D1,Sub_Head_D2=Sub_Head_D2,Sub_Head_D3=Sub_Head_D3,meeting_sub_head=meeting_sub_head)
+        return obj
+    
+    class Meta:
+        db_table= 'team_management"."Monthly_department_wise_head_and_subhead'
+        ordering=["quater_with_financial_year"]
+        ...
+        
+# for i in ["Sales","Marketing","Production","Vigil","R&D","NPC","Business Strategy","Accounts&Finance","Purchase","HR","Legal&Document","NPD"]:
+#     Departments.add_department(dept_name=i)
+    
+# obj=Quaters.create_quater(quater="Q3",starting_month=9,ending_month=12)
+# Financial_years_Quaters_Mapping.add_quaterwise_year(quater=obj,financial_year_start=2026,financial_year_end=2027)
+# Roles.objects.create(role_name="Admin")  
+# Roles.objects.create(role_name="MD")        
+# Roles.objects.create(role_name="Employee")        
+# Roles.objects.create(role_name="Intern")        
+# Roles.objects.create(role_name="TeamLead")        
 
 # Branch.objects.create(branch_name="Farm Core")
 # Branch.objects.create(branch_name="Farm Tech")
 # Branch.objects.create(branch_name="Infra Core")
 # Branch.objects.create(branch_name="Infra Tech")
 # Branch.objects.create(branch_name="Technology")
+
+# Designation.objects.create(designation="Python Developer")
+# Designation.objects.create(designation="AI/ML Developer")
+# Designation.objects.create(designation="Web Developer")
+# Designation.objects.create(designation="Backend Developer")
+# Designation.objects.create(designation="Precision Agriculture Manager")
+# Designation.objects.create(designation="Digital Marketing Manager")
+# Designation.objects.create(designation="Project Supervisor")
+# Designation.objects.create(designation="Designer Engineer")
+# Designation.objects.create(designation="Site Engineer")
+# Designation.objects.create(designation="Field Officer")
+
+
+# Departments.objects.create(dept_name="Sales")
+# Departments.objects.create(dept_name="Marketing")
+# Departments.objects.create(dept_name="Production")
+# Departments.objects.create(dept_name="Vigil")
+# Departments.objects.create(dept_name="")
+# Departments.objects.create(dept_name="")
 
 
 

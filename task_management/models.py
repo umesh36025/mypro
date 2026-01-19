@@ -114,6 +114,10 @@ class TaskMessage(models.Model):
 
 # Insert rows into db tables through models instances
 # TaskTypes.objects.create(type_name="1 Day")
+# TaskTypes.objects.create(type_name="SOS")
 # TaskTypes.objects.create(type_name="10 Day")
 # TaskTypes.objects.create(type_name="Monthly")
 # TaskTypes.objects.create(type_name="Quaterly")
+# TaskStatus.objects.create(status_name="PENDING")
+# TaskStatus.objects.create(status_name="COMPLETED")
+# TaskStatus.objects.create(status_name="INPROCESS")

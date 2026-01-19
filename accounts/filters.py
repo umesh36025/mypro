@@ -1,7 +1,7 @@
 import json
 from django.http import HttpRequest, JsonResponse
 from django.views import View
-from accounts.models import Designation,Roles,Profile,User,Branch
+from accounts.models import *
 from django.db import models
 from rest_framework import status
 # from django.shortcuts import get_object_or_404
@@ -65,12 +65,23 @@ def get_user_role(user=User):
 # Use in the dropdown as for designations.
 def get_designations(request:HttpRequest):
     data=request.GET
+    # print(data)
     if data.get("Role")=="MD" or data.get("Role")=="Admin":
         designations=[{}]
     else:
         designations=Designation.objects.all().values("designation")
+    # print(designations)
     return JsonResponse(list(designations),safe=False)
 
+
+def get_department_obj(dept=str):
+    try:
+        dept_obj=Departments.objects.get(dept_name=dept)
+    except Exception as e:
+        print(e)
+        return JsonResponse({"Message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
+    else:
+        return dept_obj
 # get all defined roles in an organisation.
 # endpoint={{baseurl}}/accounts/getRoles/.
 # use in the dropdown of roles.
@@ -159,3 +170,11 @@ def load_files_data(request: HttpRequest):
         return files
     else:
         return None
+
+def get_departments(request: HttpRequest):
+    data=request.GET
+    if data.get("Role")=="MD":
+        departmets=[{}]
+    else:
+        departmets=Departments.objects.all().values("dept_name")
+    return JsonResponse(list(departmets),safe=False)
