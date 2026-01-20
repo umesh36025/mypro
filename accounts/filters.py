@@ -173,8 +173,10 @@ def load_files_data(request: HttpRequest):
 
 def get_departments(request: HttpRequest):
     data=request.GET
-    if data.get("Role")=="MD":
-        departmets=[{}]
+    role=data.get("Role")
+    # print(role)
+    if role in ["Admin","MD"]:
+        departments=[{}]
     else:
-        departmets=Departments.objects.all().values("dept_name")
-    return JsonResponse(list(departmets),safe=False)
+        departments=Departments.objects.all().values("dept_name")
+    return JsonResponse(list(departments),safe=False)

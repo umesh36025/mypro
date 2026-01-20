@@ -14,6 +14,7 @@ def home(request: HttpRequest):
 @admin_required
 def create_employee_login(request: HttpRequest):
     fields=['Employee_id','password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link',"Department"]
+    not_required_field=["Branch","Designation","Department"]
     login_values={}
     profile_values={}
     try:
@@ -26,14 +27,10 @@ def create_employee_login(request: HttpRequest):
                     else:
                         field_value=files.get(i)
                     
-                    if not field_value and i!="Designation" and i!="Branch" and i!="Department":
+                    if not field_value and i in not_required_field:
                         print("error1")
                         return JsonResponse({"messege":f"{i} is required"},status=status.HTTP_406_NOT_ACCEPTABLE)
-                    elif i=="Designation" and not data.get(i):
-                        ...
-                    elif i=="Branch" and not data.get(i):
-                        ...
-                    elif i=="Department" and not data.get(i):
+                    elif i in not_required_field and not data.get(i):
                         ...
                     elif i=='Employee_id':
                         login_values["username"]=str(field_value)
@@ -44,7 +41,7 @@ def create_employee_login(request: HttpRequest):
                         login_values["email"]=field_value
                         profile_values[i]=field_value
                     else:
-                        profile_values[i]=field_value
+                        profile_values[i]=field_value.strip()
         else:
             # print("error2")
             return JsonResponse({"messege":"Request method must be 'POST'"},status=status.HTTP_400_BAD_REQUEST)
@@ -53,8 +50,6 @@ def create_employee_login(request: HttpRequest):
         return JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)
     else:
         try:
-            # profile_values.update(login_values)
-            # print(profile_values)
             check_user=User.objects.filter(username=login_values["username"]).first()
             if not check_user:
                 user = User(**login_values)
@@ -108,11 +103,12 @@ def create_employee_login(request: HttpRequest):
 #Get a view of all employees/users present in the record. 
 @login_required
 def get_all_employees(request: HttpRequest):
-        role=get_user_role(user=request.user)
-        profile_data=Profile.objects.filter().select_related("Role","Designation","Branch","Department")
+        admin_role=get_role_object(role="Admin")
+        profile_data=Profile.objects.exclude(Role=admin_role).select_related("Role","Designation","Branch","Department")
         users_data=[]
         for pd in profile_data:
-            if pd.Role.role_name!="MD":
+            role=pd.Role.role_name
+            if  role not in ["MD","Admin"]:
                 user={"Employee_id":pd.Employee_id.username,
                       "Name":pd.Name,
                       "Role":pd.Role.role_name,
@@ -123,17 +119,6 @@ def get_all_employees(request: HttpRequest):
                       "Email_id":pd.Email_id,
                       "Photo_link":pd.Photo_link.url,
                       "department":None}
-                users_data.append(user)
-            elif pd.Role.role_name=="Admin":
-                user={"Employee_id":pd.Employee_id.username,
-                      "Name":None,
-                      "Role":pd.Role.role_name,
-                      "Branch":None,
-                      "Designation":None,
-                      "Date_of_birth":None,
-                      "Date_of_join":None,
-                      "Email_id":pd.Email_id,
-                      "Photo_link":None}
                 users_data.append(user)
             else:
                 user={"Employee_id":pd.Employee_id.username,
@@ -146,6 +131,7 @@ def get_all_employees(request: HttpRequest):
                       "Email_id":pd.Email_id,
                       "Photo_link":pd.Photo_link.url}
                 users_data.append(user)
+                
         return  JsonResponse(users_data,safe=False)
 
 # get the session data of a logged_in user.
@@ -353,7 +339,7 @@ def delete_user_profile(request: HttpRequest,u):
             return JsonResponse({"message":"user deleted successfully"})
     else:
             return JsonResponse({"message":"Request method must be 'DELETE'"},status=status.HTTP_400_BAD_REQUEST)
- 
+
 @csrf_exempt       
 def add_meeting_head_subhead(request:HttpRequest):
     data=load_data(request)

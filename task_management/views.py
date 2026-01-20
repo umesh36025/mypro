@@ -36,7 +36,8 @@ def create_task(request:HttpRequest):
     try:
         body_data["type"]=get_object_or_404(TaskTypes,type_name=body_data["type"])
         body_data["created_by"]=request.user
-        assignees=body_data["assigned_to"]
+        assignees=body_data.pop("assigned_to")
+        # print(body_data)
         # body_data["assigned_to"]=u_profile.Employee_id
     except Http404 as e:
         print(e)
@@ -46,7 +47,6 @@ def create_task(request:HttpRequest):
         return JsonResponse({"message":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)
     else:
         try:
-            body_data.pop("assigned_to")
             print(body_data)
             task = Task.objects.create(**body_data)
             for userid in assignees:

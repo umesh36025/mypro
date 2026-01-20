@@ -25,6 +25,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls'),name="accounts"),
     path("tasks/",include("task_management.urls"),name="task_management"),
     path("messaging/",include("Messaging.urls"),name="Messaging"),
+    path("",include("QuaterlyReports.urls"),name="QuaterlyReports"),
 ]
 
 if settings.DEBUG:

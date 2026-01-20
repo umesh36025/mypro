@@ -42,6 +42,9 @@ def create_group(request:HttpRequest):
         return verify_method
     has_permission=has_group_create_or_add_member_permission(request.user)
     try:
+        current_user_name=Profile.objects.get(Employee_id=request.user).Name
+        if not current_user_name:
+            return JsonResponse({"message":"You cannot create your group, untill you Complete your profile"},status=status.HTTP_304_NOT_MODIFIED)
         if has_permission:
             group_create_fields=["group_name","description","participants"]
             temp_dict={}
@@ -71,13 +74,7 @@ def create_group(request:HttpRequest):
             if not chat_id:
                 return JsonResponse({"Messsage":"Group not created"},status=status.HTTP_304_NOT_MODIFIED)
             else:
-                participants_data:dict=data.get("participants")
-                try:
-                    current_user_name=Profile.objects.get(Employee_id=request.user).Name
-                except Exception as e:
-                    print(e)
-                    return JsonResponse({"message":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
-                else:
+                    participants_data:dict=data.get("participants")
                     participants_data.update({f"{current_user_name}":request.user.username})
                     for i in participants_data:
                         user=get_user_object(username=participants_data[i])
@@ -86,7 +83,7 @@ def create_group(request:HttpRequest):
                         else:
                             return JsonResponse(user,status=status.HTTP_304_NOT_MODIFIED)
                         
-                return JsonResponse({"Messsage":"Group created successfully"},status=status.HTTP_201_CREATED)
+            return JsonResponse({"Messsage":"Group created successfully"},status=status.HTTP_201_CREATED)
 
 @login_required
 def show_created_groups(request: HttpRequest):
