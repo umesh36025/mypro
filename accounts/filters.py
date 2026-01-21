@@ -6,7 +6,7 @@ from django.db import models
 from rest_framework import status
 # from django.shortcuts import get_object_or_404
 
-# get an user's "Profile" object from user's "User" object
+# get an user's "Profile" object from the user's "User" object
 def get_user_profile_object(user:User):
     try:
         profile=Profile.objects.get(Employee_id=user)
@@ -15,7 +15,7 @@ def get_user_profile_object(user:User):
     else:
         return profile
     
-# get an user's "User" object from its username
+# get an user's "User" object from an username
 def get_user_object(username:str):
     try:
         user=User.objects.get(username=username)
@@ -73,7 +73,6 @@ def get_designations(request:HttpRequest):
     # print(designations)
     return JsonResponse(list(designations),safe=False)
 
-
 def get_department_obj(dept=str):
     try:
         dept_obj=Departments.objects.get(dept_name=dept)
@@ -129,7 +128,28 @@ def verifyGet(request: HttpRequest):
         return JsonResponse({"error": "Method not allowed"}, status=status.HTTP_400_BAD_REQUEST)
     else:
         return None
-    
+
+def get_teamLeads(request: HttpRequest):
+    verify_method=verifyGet(request)
+    if verify_method:
+        return verify_method
+    try:
+        allowed_roles=["Employee","Intern"]
+        data=request.GET
+        query_role=data.get("Role")
+        if query_role in allowed_roles:
+            role=get_role_object(role="TeamLead")
+            teamleads=Profile.objects.filter(Role=role).order_by("Name")
+            data=[{"Name":tl.Name,
+            "Employee_id":tl.Employee_id.username} 
+            for tl in teamleads]
+        else:
+            data=[{}]
+    except Exception as e:
+        print(e)
+        return JsonResponse({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return JsonResponse(list(data),safe=False,status=status.HTTP_200_OK)
 # to verify DELETE request 
 # use in the view that has been passed in the respective path function of the requested url.
 def verifyDelete(request: HttpRequest):
@@ -171,12 +191,14 @@ def load_files_data(request: HttpRequest):
     else:
         return None
 
-def get_departments(request: HttpRequest):
+def get_departments_and_functions(request: HttpRequest):
     data=request.GET
     role=data.get("Role")
     # print(role)
     if role in ["Admin","MD"]:
-        departments=[{}]
+        response=[{}]
     else:
-        departments=Departments.objects.all().values("dept_name")
-    return JsonResponse(list(departments),safe=False)
+        departments=Departments.objects.all()
+        functions=Functions.objects.all()
+        response={"Departments":[i.dept_name for i in departments],"functions":[j.function for j in functions]}
+    return JsonResponse(response,safe=False,status=status.HTTP_200_OK)

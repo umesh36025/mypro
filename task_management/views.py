@@ -60,8 +60,6 @@ def create_task(request:HttpRequest):
         except Http404 as e:
             print(e)
             return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
-            
-        
 # Update a particular Task. applicable method-"POST",insert path parameter "task_id" of type integer. 
 # endpoint-{{baseurl}}/tasks/{task_id}/updateTask/
 @csrf_exempt

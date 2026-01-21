@@ -53,15 +53,20 @@ def get_addeded_entries_by_username_Date(request:HttpRequest,date=None,username=
         try:
             user_obj=get_object_or_404(User,username=username)
             # Role-based filtering
-            if username and date:
+            if user_obj and date:
                 entries = UsersEntries.objects.select_related("user", "month_and_quater_id","status").filter(user=user_obj,date=date).order_by("date")
             
-            elif username and not date:
+            elif user_obj and not date:
                 entries = UsersEntries.objects.select_related("user", "month_and_quater_id","status").filter(user=user_obj).order_by("date")
+                
+            else:
+                return JsonResponse({"error": "invalid query parameter"}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
                 
             data = []
             for entry in entries:
                 data.append({
+                    "id":entry.id,
+                    "note":entry.note,
                     "meeting_head": entry.month_and_quater_id.Meeting_head,
                     "meeting_sub_head": entry.month_and_quater_id.meeting_sub_head,
                     "username": entry.user.username,
@@ -69,7 +74,7 @@ def get_addeded_entries_by_username_Date(request:HttpRequest,date=None,username=
                     "status": entry.status.status_name,
                     "month_quater_id": entry.month_and_quater_id.quater.quater,
                 })
-                return data
+            return data
         except Http404 as e:
             print(e)
             return JsonResponse({"error": "User profile not found"}, status=404)
@@ -123,14 +128,14 @@ def create_multiple_user_entries(request):
     if verify_method:
         return verify_method
     try:
+        fields=["date","entries","month_quater_id"]
         data = load_data(request)
         entry_date = data.get("date")
         month_quater_id = data.get("month_quater_id")
-        username = data.get("username")
         entries = data.get("entries")
-        if not username or not entries:
+        if not all(fields):
             return JsonResponse({"error": "Invalid payload"}, status=400)
-        user = User.objects.get(username=username)
+        user = request.user
         created_entries = []
         for entry in entries:
             note=entry.get("note")
@@ -172,12 +177,12 @@ def create_multiple_user_entries(request):
 def get_entries(request: HttpRequest):
     verify_method=verifyGet(request)
     if verify_method:
-        verify_method
+        return verify_method
     try:
         login_users_username=request.user.username
         data=request.GET
         username=data.get("username")
-        date=data.get("date")
+        date=data.get("Date")
         superuser=request.user.is_superuser
         if username and superuser and date:
             data=get_addeded_entries_by_username_Date(request,date=date,username=username)
@@ -195,7 +200,7 @@ def get_entries(request: HttpRequest):
 
     except PermissionDenied as e:
             print(e)
-            return JsonResponse({"message":"you cannot create a Group. Kindly contact your TeamLead/Admin"},status=status.HTTP_403_FORBIDDEN)
+            return JsonResponse({"message":"you are not authorised to access other users records"},status=status.HTTP_403_FORBIDDEN)
     except Exception as e:
             print(e)
             return JsonResponse({"error": str(e)}, status=500)
@@ -204,4 +209,44 @@ def get_entries(request: HttpRequest):
             return data
         return JsonResponse(data,safe=False,status=200)
 
+@login_required
+@csrf_exempt
+def change_status(request: HttpRequest,user_entry_id:int):
+    request_method=verifyPatch(request)
+    if request_method:
+        return request_method
+    data=load_data(request)
+    changed_to:str=data.get("change_Status_to")
+    try:
+        user_entry=UsersEntries.objects.get(id=user_entry_id)
+        changed_status=get_taskStatus_object(status_name=changed_to.upper())
+        setattr(user_entry,"status",changed_status)
+        user_entry.save()
+    except Exception as e:
+        return JsonResponse({"message":f"{e}"})
+    else:
+        return JsonResponse({"message":f"Status Changed to {changed_to}"})
 # Create your views here.
+
+@csrf_exempt       
+def add_meeting_head_subhead(request:HttpRequest):
+    data=load_data(request)
+    quater=data.get("quater")
+    month=data.get("month")
+    head=data.get("head")
+    sub_head=data.get("sub_head")
+    sub_d1=data.get("sub_d1")
+    sub_d2=data.get("sub_d2")
+    sub_d3=data.get("sub_d3")
+    try:
+        department=get_department_obj(dept=data.get("dept"))
+        quater_object=Quaters.objects.get(quater=quater)
+    except Exception as e:
+        print(e)
+        return JsonResponse({"Message":"Error occured"})
+    else:
+        Monthly_department_head_and_subhead.create_head_and_subhead_for_each_dept(dept=department,quater=quater_object,
+                                                                            month_of_the_quater=month,Meeting_head=head,meeting_sub_head=sub_head,
+                                                                            Sub_Head_D1=sub_d1,Sub_Head_D2=sub_d2,Sub_Head_D3=sub_d3)
+    
+    return JsonResponse({"Message":"added successfully"})

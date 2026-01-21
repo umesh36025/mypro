@@ -47,6 +47,8 @@ class Profile(models.Model):
     Photo_link=models.ImageField(verbose_name="image_link", upload_to="profile_images/", height_field=None, width_field=None, max_length=None,null=True,blank=True)
     Date_of_join=models.DateField(verbose_name="date_of_joining",auto_now=False, auto_now_add=False,null=True)
     Department=models.ForeignKey("Departments",verbose_name="department",db_column="department",on_delete=models.CASCADE,related_name="department",null=True)
+    Teamlead=models.ForeignKey(User,on_delete=models.CASCADE,related_name="teamlead",null=True,verbose_name="teamlead",default=None,db_column="teamlead")
+    Function=models.ForeignKey("Functions",on_delete=models.CASCADE,null=True,verbose_name="function",default=None,db_column="function")
     class Meta:
         verbose_name = "Employee Profile"
         verbose_name_plural = "Employees Profile"
@@ -90,6 +92,13 @@ class Departments(models.Model):
         ordering=["dept_name"]
     ...
 
+class Functions(models.Model):
+    function=models.CharField(max_length=10,unique=True,null=False,verbose_name="employee-function")
+    class Meta:
+        db_table= 'team_management"."Functions'
+        verbose_name_plural = "Functions"
+    ...
+    
 # obj=Quaters.create_quater(quater="Q3",starting_month=9,ending_month=12)
 # Financial_years_Quaters_Mapping.add_quaterwise_year(quater=obj,financial_year_start=2026,financial_year_end=2027)
 # Roles.objects.create(role_name="Admin")  
@@ -115,6 +124,8 @@ class Departments(models.Model):
 # Designation.objects.create(designation="Site Engineer")
 # Designation.objects.create(designation="Field Officer")
 
+# for i in ["NPD","MMR","RG","HC","IP"]:
+#     Functions.objects.create(function=i)
 
 
 
