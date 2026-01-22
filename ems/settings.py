@@ -25,7 +25,7 @@ load_dotenv(f"{BASE_DIR}/.env")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*","localhost:3000/","localhost:3000","employee-management-system-tmrl.onrender.com"]
                 #  "127.0.0.1:8000/","http://192.168.41.120:3000/","http://192.168.41.120:3001/","http://192.168.41.120:3000","http://192.168.41.120:3001","192.168.41.120:3000/","192.168.41.120:3001/*"]
@@ -173,7 +173,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
-    "https://employee-management-system-tmrl.onrender.com"
+    "https://employee-management-system-tmrl.onrender.com",
+    "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/"
 ]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_COOKIE_SECURE = True

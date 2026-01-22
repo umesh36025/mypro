@@ -8,6 +8,27 @@ from .models import *
 # "Removed Duplicates1"
 
 # # # # # #  baseurl="http://localhost:8000" # # # # # # # # # # # # 
+from datetime import date
+
+def completed_years_and_days(start_date: date) -> str:
+    end_date = date.today()
+    if start_date >end_date:
+        return "Null"
+
+    # Step 1: Calculate completed years
+    years = end_date.year - start_date.year
+
+    # Adjust if anniversary not yet reached
+    anniversary = start_date.replace(year=start_date.year + years)
+    if anniversary > end_date:
+        years -= 1
+        anniversary = start_date.replace(year=start_date.year + years)
+
+    # Step 2: Remaining days
+    days = (end_date - anniversary).days
+
+    return f"{years} years {days} days"
+
 
 # a get method for home page
 # endpoint-{{baseurl}}/
@@ -114,6 +135,7 @@ def get_all_employees(request: HttpRequest):
                     "Designation":pd.Designation.designation,
                     "Date_of_birth":pd.Date_of_birth,
                     "Date_of_join":pd.Date_of_join,
+                    "Number_of_days_from_joining":completed_years_and_days(start_date=pd.Date_of_join),
                     "Email_id":pd.Email_id,
                     "Photo_link":pd.Photo_link.url,
                     "department":None,
@@ -128,6 +150,7 @@ def get_all_employees(request: HttpRequest):
                     "Designation":None,
                     "Date_of_birth":pd.Date_of_birth,
                     "Date_of_join":pd.Date_of_join,
+                    "Number_of_days_from_joining":completed_years_and_days(start_date=pd.Date_of_join),
                     "Email_id":pd.Email_id,
                     "Photo_link":pd.Photo_link.url,
                     "teamlead":None,
@@ -173,7 +196,7 @@ def user_login(request:HttpRequest):
         if not u or not p:
             return JsonResponse({"message":"username or password is missing"},status=status.HTTP_204_NO_CONTENT)
         else:
-            print(u,p)
+            # print(u,p)
             user= authenticate(request,username=u,password=p)
             if not user:
                     return  JsonResponse({"messege":"Incorrect userID/Password,Try again"},status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -275,18 +298,18 @@ def update_profile(request: HttpRequest,username):
                     profile_values["Role"]=get_role
                     if all(data.get(i) for i in ["Designation","Branch","Department","Function"]):
                         get_branch=get_object_or_404(Branch,branch_name=profile_values["Branch"])
-                        get_designation=get_object_or_404(Designation,designation=profile_values["Designation"])                    
+                        get_designation=get_object_or_404(Designation,designation=profile_values["Designation"])                  
                         get_department=get_object_or_404(Departments,dept_name=profile_values["Department"])
                         get_function=get_object_or_404(Functions,function=profile_values["Function"])
                         profile_values["Department"]=get_department
                         profile_values["Branch"]=get_branch
                         profile_values["Designation"]=get_designation
-                        profile_values["Function"]=get_function               
+                        profile_values["Function"]=get_function          
                     user.save()
                     Profile.objects.filter(Employee_id=user).update(**profile_values)
             except Http404 as e:
                 print(e)
-                return  JsonResponse({"messege":f"{e}"})
+                return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
                     print(e)
                     return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)

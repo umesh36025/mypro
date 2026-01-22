@@ -3,6 +3,7 @@ from django.db.models.signals import post_delete,post_save,pre_save,post_init
 from django.dispatch import receiver
 from .models import Profile,User,management_Profile
 from .filters import get_role_object
+from django.http import JsonResponse
 
 @receiver(post_delete, sender=Profile)
 def delete_profile_photo(sender, instance:Profile, **kwargs):
@@ -18,11 +19,21 @@ def create_emp_profile(sender, instance: Profile, created, **kwargs):
         management_Profile.objects.create(Employee=instance.Employee_id,Role=instance.Role,Email_id=instance.Email_id,Photo_link=instance.Photo_link,
                                         Date_of_join=instance.Date_of_join,Date_of_birth=instance.Date_of_birth,
                                         Name=instance.Name)
+    role_object=instance.Role
+    role_object.total_count+=1
+    role_object.save()
 
 
 @receiver(post_save, sender=User)
-def create_emp_profile(sender, instance: User, created, **kwargs):
-    if created and instance.is_superuser:
-        role_object=get_role_object(role="Admin")
-        management_Profile.objects.create(Employee=instance,Role=role_object,Email_id=instance.email)
+def create_profile_from_user(sender, instance: User, created, **kwargs):
+    try:
+        if created and instance.is_superuser:
+            role_object=get_role_object(role="Admin")
+            role_object.total_count+=1
+            management_Profile.objects.create(Employee=instance,Role=role_object,Email_id=instance.email)
+            role_object.save()
+    except Exception as e:
+        print(e)
+        return JsonResponse({"Error occured"},status=404)
+        
         
