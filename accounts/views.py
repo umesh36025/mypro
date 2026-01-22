@@ -1,6 +1,12 @@
 from accounts.RequiredImports import *
 from .models import *
 
+    # "Appended Query" = Table.Combine({#"Changed Type",#"Changed Type"}),
+    # "Removed Duplicates" = Table.Distinct(#"Appended Query", {"Column1"}),
+    # "Removed Duplicates1" = Table.Distinct(#"Removed Duplicates", {"Column1"})
+# in
+# "Removed Duplicates1"
+
 # # # # # #  baseurl="http://localhost:8000" # # # # # # # # # # # # 
 
 # a get method for home page
