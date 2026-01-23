@@ -23,7 +23,6 @@ def create_emp_profile(sender, instance: Profile, created, **kwargs):
     role_object.total_count+=1
     role_object.save()
 
-
 @receiver(post_save, sender=User)
 def create_profile_from_user(sender, instance: User, created, **kwargs):
     try:

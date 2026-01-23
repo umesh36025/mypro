@@ -138,9 +138,9 @@ def get_all_employees(request: HttpRequest):
                     "Number_of_days_from_joining":completed_years_and_days(start_date=pd.Date_of_join),
                     "Email_id":pd.Email_id,
                     "Photo_link":pd.Photo_link.url,
-                    "department":None,
+                    "department":pd.Department.dept_name,
                     "Teamleader":get_users_Name(pd.Teamlead),
-                    "function":None}
+                    "function":pd.Function.function}
                 users_data.append(user)
             else:
                 user={"Employee_id":pd.Employee_id.username,
@@ -252,9 +252,8 @@ def update_profile(request: HttpRequest,username):
         print(e)
         return  JsonResponse({"messege":"User Profile is missing."},status=status.HTTP_404_NOT_FOUND) 
     else:
-        fields=['password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link',"Department","Teamlead","Function"]
+        fields=['Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link',"Department","Teamlead","Function"]
         not_required_fields=["Designation","Branch","password","Photo_link","Department","Teamlead","Function"]
-        login_values={}
         profile_values={}
         try:
             data=request.POST
@@ -264,20 +263,34 @@ def update_profile(request: HttpRequest,username):
                     field_value=data.get(i)
                 else:
                     field_value=files.get(i)
+                
                 if not field_value and i not in not_required_fields:
                     print("error1")
                     return JsonResponse({"messege":f"{i} is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
-                elif i=="Teamlead" and field_value:
-                    get_teamlead_obj=get_object_or_404(User,username=field_value)
-                    profile_values["Teamlead"]=get_teamlead_obj
                 elif i in not_required_fields and not field_value:
                     ...
-                elif i=="password" and field_value:
-                    setattr(user,"password",field_value)
-                    user.set_password(field_value)
                 elif i == 'Email_id':
                     setattr(user,'email',field_value)
+                    user.save()
                     profile_values[i]=field_value
+                elif i=="Teamlead" and field_value:
+                    get_teamlead_obj=get_object_or_404(User,username=field_value)
+                    profile_values[i]=get_teamlead_obj
+                elif i=="Branch" and field_value:
+                        get_branch=get_object_or_404(Branch,branch_name=field_value)
+                        profile_values[i]=get_branch
+                elif i=="Department" and field_value:
+                        get_department=get_object_or_404(Departments,dept_name=field_value)
+                        profile_values[i]=get_department
+                elif i=="Designation" and field_value:
+                        get_designation=get_object_or_404(Designation,designation=field_value)                  
+                        profile_values[i]=get_designation
+                elif i=="Function" and field_value:
+                        get_function=get_object_or_404(Functions,function=field_value)
+                        profile_values[i]=get_function
+                elif i=="Role" and field_value:
+                    get_role=get_object_or_404(Roles,role_name=profile_values["Role"])
+                    profile_values[i]=get_role
                 else:
                     profile_values[i]=field_value
             # print(profile_values)
@@ -294,18 +307,6 @@ def update_profile(request: HttpRequest,username):
                 profile.Photo_link=photo
                 profile.save(force_update=True)
             try:
-                    get_role=get_object_or_404(Roles,role_name=profile_values["Role"])
-                    profile_values["Role"]=get_role
-                    if all(data.get(i) for i in ["Designation","Branch","Department","Function"]):
-                        get_branch=get_object_or_404(Branch,branch_name=profile_values["Branch"])
-                        get_designation=get_object_or_404(Designation,designation=profile_values["Designation"])                  
-                        get_department=get_object_or_404(Departments,dept_name=profile_values["Department"])
-                        get_function=get_object_or_404(Functions,function=profile_values["Function"])
-                        profile_values["Department"]=get_department
-                        profile_values["Branch"]=get_branch
-                        profile_values["Designation"]=get_designation
-                        profile_values["Function"]=get_function          
-                    user.save()
                     Profile.objects.filter(Employee_id=user).update(**profile_values)
             except Http404 as e:
                 print(e)
@@ -314,7 +315,6 @@ def update_profile(request: HttpRequest,username):
                     print(e)
                     return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
             else:
-                
                     return  JsonResponse({"messege":"user details update successfully"},status=status.HTTP_205_RESET_CONTENT)
 
 @csrf_exempt

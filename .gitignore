@@ -1,3 +1,5 @@
 .env
 db.sqlite3
 accounts/__pycache__
+ActionableGoals.csv
+FunctionGoals.csv

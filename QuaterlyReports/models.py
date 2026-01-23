@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import *
 from task_management.models import TaskStatus
+from task_management.filters import get_taskStatus_object
 
 class Quaters(models.Model):
     quater=models.CharField(max_length=20,null=False,primary_key=True)
@@ -52,4 +53,88 @@ class UsersEntries(models.Model):
     class Meta:
         db_table= 'team_management"."UserEntries'
 
+class FunctionsGoals(models.Model):
+    Function=models.ForeignKey(Functions,on_delete=models.CASCADE,db_column="function_id",verbose_name="function_id")
+    Maingoal=models.CharField(max_length=100,null=False)
+    
+    class Meta:
+        db_table= 'quatery_reports"."FunctionGoals'
+        ordering=["Function"]
+    
+class ActionableGoals(models.Model):
+    FunctionGoal=models.ForeignKey(FunctionsGoals,on_delete=models.CASCADE,db_column="goal_id")
+    purpose=models.CharField(max_length=100,null=False)
+            
+    class Meta:
+        db_table= 'quatery_reports"."ActionableGoals'
+        ordering=["FunctionGoal"]
+    
+class FunctionsEntries(models.Model):
+    goal=models.ForeignKey(ActionableGoals,on_delete=models.CASCADE,db_column="sub_goal_id",null=True)
+    Creator=models.ForeignKey(User,on_delete=models.CASCADE,to_field="username",db_column="Employee_id",null=False)
+    date=models.DateField(auto_now=False,auto_now_add=False)
+    status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,editable=True,null=False)
+    note=models.TextField(null=False)
+    class Meta:
+        db_table= 'quatery_reports"."FunctionsEntries'
+        ordering=["-date"]
+
+class GRPS(models.Model):
+    grp=models.CharField(max_length=10)
+    
+    class Meta:
+        db_table= 'quatery_reports"."GRP'
+        ordering=["grp"]
+    
+class PlannedActions(models.Model):
+    grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,db_column="grp",null=False,verbose_name="grp")
+    action=models.TextField(null=False)
+    deadline=models.DateField(auto_now_add=False,auto_now=False)
+    assigned_to=models.ForeignKey(User,on_delete=models.CASCADE,db_column="assigned_to",null=False,verbose_name="assigned_help_to")
+    status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,db_column="status",null=False,verbose_name="status")
+    
+    class Meta:
+        db_table= 'quatery_reports"."PlannedActions'
+        ordering=["grp","-deadline"]
+class SalesStatistics(models.Model):
+        grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,db_column="grp",null=False,verbose_name="grp")
+        Sale=models.IntegerField(null=True)
+        Calls=models.IntegerField(null=True)
+        Trial=models.IntegerField(null=True)
+        Demand=models.IntegerField(null=True)
+        Old_tgt=models.IntegerField(null=True)
+        New_acq=models.IntegerField(null=True)
+        Pitch=models.IntegerField(null=True)
+        CP_ratio=models.CharField(null=True)
+        Lead=models.IntegerField(null=True)
+        Qual=models.IntegerField(null=True)
+        Demo=models.IntegerField(null=True)
+        Quote=models.IntegerField(null=True)
+        Close=models.IntegerField(null=True)
+        Conversion_percent=models.DecimalField(decimal_places=2,null=False,max_digits=6)
+        status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,db_column="status",null=False,verbose_name="status",)
+        
+        class Meta:
+            db_table= 'quatery_reports"."SalesStatistics'
+            ordering=["grp"]
 # Create your models here.
+
+# function_goal_obj=FunctionsGoals.objects.get(id=21)
+# for i in ["Making raw material cheaper","Completing the process quickly","Controlling all centres of value creation","Process/ingredient quality doesn’t have to be pushed","Procuring the product from another"]:
+#     ActionableGoals.objects.create(FunctionGoal=function_goal_obj,purpose=i)
+
+# function_goal_obj=FunctionsGoals.objects.get(id=22)
+# for i in ["Does reduction","Increasing effectiveness over a longer period of time","Increasing the activity spectrum","Maintaining effectiveness in different situations"]:
+#     ActionableGoals.objects.create(FunctionGoal=function_goal_obj,purpose=i)
+    
+# function_goal_obj=FunctionsGoals.objects.get(id=23)
+# for i in ["Finding flows in a product through the eyes of the customer","Product never feels customer-oriented","Which quality makes the product long-term in the market","Making the quality stronger","Finding out which feature/part of the product is underutilized"]:
+#     ActionableGoals.objects.create(FunctionGoal=function_goal_obj,purpose=i)
+    
+# function_goal_obj=FunctionsGoals.objects.get(id=24)
+# for i in ["Identifying needs through regular contact","Find out where quality fails short","New product iterations, four directions of study","If your product is not there, there is a need for it","Find out what will be done"]:
+#     ActionableGoals.objects.create(FunctionGoal=function_goal_obj,purpose=i)
+    
+# function_goal_obj=FunctionsGoals.objects.get(id=25)
+# for i in ["competition monitoring","Trend tracking","Edge creation"]:
+#     ActionableGoals.objects.create(FunctionGoal=function_goal_obj,purpose=i)

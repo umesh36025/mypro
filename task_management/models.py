@@ -16,7 +16,6 @@ class TaskStatus(models.Model):
         verbose_name="task_status"
         verbose_name_plural = "task_statuses"
 
-    
 class Task(models.Model):
     task_id=models.BigAutoField(primary_key=True,verbose_name="task_id",auto_created=True)
     title = models.CharField(max_length=200,null=False)
@@ -60,27 +59,27 @@ class TaskAssignies(models.Model):
         return "None"
     
 class TaskCreateAndEditLogs(models.Model):
-    # task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="edit_logs")
-    # created_at=models.DateField(auto_now_add=True,db_index=True)
-    # created_time=models.TimeField(auto_now_add=True)
-    # last_edit_time=models.TimeField(auto_now=True)
-    # last_edit_date=models.DateField(auto_now=True)
-    # class Meta:
-    #     db_table='Task_create_edit_logs'
-    #     verbose_name="task_edit_create_log"
+    task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="task_edit_logs")
+    created_at=models.DateTimeField(auto_now_add=True,db_index=True)
+    last_edit=models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table='task_management"."Task_create_edit_logs'
+        verbose_name="task_edit_create_log"
+        ordering=["-last_edit"]
     ...
     
 class TaskStatusChangeLogs(models.Model):
-    # task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="status_change_log")
-    # last_status_change_date=models.DateField(auto_now=True)
-    # last_status_change_time=models.TimeField(auto_now=True)
-    # status_change_to=models.ForeignKey("task_management.TaskStatus", verbose_name=("change_to"), on_delete=models.CASCADE,db_column="change_to",null=False,related_name="status_change_log")
-    # class Meta:
-    #     db_table="Task_status_changes_log"
-    #     verbose_name="task_status_change_log"
+    task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="status_change_logs")
+    created_at=models.DateTimeField(auto_now_add=True,db_index=True)
+    last_edit=models.DateTimeField(auto_now=True)
+    status_change_to=models.ForeignKey("task_management.TaskStatus", verbose_name=("change_to"), on_delete=models.CASCADE,db_column="change_to",null=False,related_name="status_change_log")
+    class Meta:
+        db_table='task_management"."Task_status_changes_log'
+        verbose_name="task_status_change_log"
+        ordering=["-last_edit"]
     ...
     
-class EmployeeTasksCount(models.Model):
+class AssingnedTasksCount(models.Model):
     assignee=models.OneToOneField(User,primary_key=True,db_column="employee_id",to_field="username",on_delete=models.CASCADE)
     count_sos=models.IntegerField(db_column="total_SOS",default=0,)
     count_1_Day=models.IntegerField(db_column="total_1_Day",default=0)
@@ -88,8 +87,20 @@ class EmployeeTasksCount(models.Model):
     count_Monthly=models.IntegerField(db_column="total_Monthly",default=0)
     count_Quaterly=models.IntegerField(db_column="total_Quaterly",default=0)
     class Meta:
-        db_table='task_management"."employee_tasks_count_by_type'
-        verbose_name="employee_tasks_count_by_type"
+        db_table="Assigned_tasks_count_by_type"
+        verbose_name="Assigned_tasks_count_by_type"
+        ordering=["-count_sos","-count_1_Day"]
+        
+class CreatedTasksCount(models.Model):
+    creator=models.OneToOneField(User,primary_key=True,db_column="employee_id",to_field="username",on_delete=models.CASCADE)
+    count_sos=models.IntegerField(db_column="total_SOS",default=0,)
+    count_1_Day=models.IntegerField(db_column="total_1_Day",default=0)
+    count_10_Day=models.IntegerField(db_column="total_10_Day",default=0)
+    count_Monthly=models.IntegerField(db_column="total_Monthly",default=0)
+    count_Quaterly=models.IntegerField(db_column="total_Quaterly",default=0)
+    class Meta:
+        db_table='task_management"."Created_tasks_count_by_type'
+        verbose_name="Created_tasks_count_by_type"
         ordering=["-count_sos","-count_1_Day"]
         
 class TaskMessage(models.Model):
@@ -111,7 +122,6 @@ class TaskMessage(models.Model):
         
     def __str__(self):
         return f"{self.sender.username}: {self.message[:30]}"
-
 # Insert rows into db tables through models instances
 # TaskTypes.objects.create(type_name="1 Day")
 # TaskTypes.objects.create(type_name="SOS")
