@@ -1,34 +1,9 @@
-from accounts.RequiredImports import *
+from ems.verify_methods import *
 from .models import *
-
-    # "Appended Query" = Table.Combine({#"Changed Type",#"Changed Type"}),
-    # "Removed Duplicates" = Table.Distinct(#"Appended Query", {"Column1"}),
-    # "Removed Duplicates1" = Table.Distinct(#"Removed Duplicates", {"Column1"})
-# in
-# "Removed Duplicates1"
+from .snippet import admin_required
+from .filters import *
 
 # # # # # #  baseurl="http://localhost:8000" # # # # # # # # # # # # 
-from datetime import date
-
-def completed_years_and_days(start_date: date) -> str:
-    end_date = date.today()
-    if start_date >end_date:
-        return "Null"
-
-    # Step 1: Calculate completed years
-    years = end_date.year - start_date.year
-
-    # Adjust if anniversary not yet reached
-    anniversary = start_date.replace(year=start_date.year + years)
-    if anniversary > end_date:
-        years -= 1
-        anniversary = start_date.replace(year=start_date.year + years)
-
-    # Step 2: Remaining days
-    days = (end_date - anniversary).days
-
-    return f"{years} years {days} days"
-
 # a get method for home page
 # endpoint-{{baseurl}}/
 def home(request: HttpRequest):
@@ -122,11 +97,11 @@ def create_employee_login(request: HttpRequest):
 @login_required
 def get_all_employees(request: HttpRequest):
         admin_role=get_role_object(role="Admin")
-        profile_data=Profile.objects.exclude(Role=admin_role).select_related("Role","Designation","Branch","Department")
+        profile_data=Profile.objects.all().select_related("Role","Designation","Branch","Department")
         users_data=[]
         for pd in profile_data:
             role=pd.Role.role_name
-            if  role != "MD":
+            if  role not in ["MD","Admin"]:
                 user={"Employee_id":pd.Employee_id.username,
                     "Name":pd.Name,
                     "Role":pd.Role.role_name,
@@ -136,7 +111,7 @@ def get_all_employees(request: HttpRequest):
                     "Date_of_join":pd.Date_of_join,
                     "Number_of_days_from_joining":completed_years_and_days(start_date=pd.Date_of_join),
                     "Email_id":pd.Email_id,
-                    "Photo_link":pd.Photo_link.url,
+                    "Photo_link":get_photo_url(pd),
                     "department":pd.Department.dept_name,
                     "Teamleader":get_users_Name(pd.Teamlead),
                     "function":pd.Function.function}
@@ -151,7 +126,7 @@ def get_all_employees(request: HttpRequest):
                     "Date_of_join":pd.Date_of_join,
                     "Number_of_days_from_joining":completed_years_and_days(start_date=pd.Date_of_join),
                     "Email_id":pd.Email_id,
-                    "Photo_link":pd.Photo_link.url,
+                    "Photo_link":get_photo_url(pd),
                     "teamlead":None,
                     "function":None}
                 users_data.append(user)
@@ -367,4 +342,26 @@ def delete_user_profile(request: HttpRequest,u):
     else:
             return JsonResponse({"message":"Request method must be 'DELETE'"},status=status.HTTP_400_BAD_REQUEST)
 
+@login_required
+def get_teamLeads(request: HttpRequest):
+    verify_method=verifyGet(request)
+    if verify_method:
+        return verify_method
+    try:
+        allowed_roles=["Employee","Intern"]
+        data=request.GET
+        query_role=data.get("Role")
+        if query_role in allowed_roles:
+            role=get_role_object(role="TeamLead")
+            teamleads=Profile.objects.filter(Role=role).order_by("Name")
+            data=[{"Name":tl.Name,
+            "Employee_id":tl.Employee_id.username} 
+            for tl in teamleads]
+        else:
+            data=[{}]
+    except Exception as e:
+        print(e)
+        return JsonResponse({"message": f"{e}"}, status=status.HTTP_404_NOT_FOUND)
+    else:
+        return JsonResponse(list(data),safe=False,status=status.HTTP_200_OK)
 

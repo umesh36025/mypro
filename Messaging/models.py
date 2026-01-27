@@ -157,7 +157,4 @@ class IndividualMessages(models.Model):
             return True
         else:
             return False
-    
-    
-    
 

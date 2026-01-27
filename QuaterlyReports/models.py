@@ -2,6 +2,7 @@ from django.db import models
 from accounts.models import *
 from task_management.models import TaskStatus
 from task_management.filters import get_taskStatus_object
+from django.core.validators import MinValueValidator,MaxValueValidator
 
 class Quaters(models.Model):
     quater=models.CharField(max_length=20,null=False,primary_key=True)

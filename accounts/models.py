@@ -1,11 +1,6 @@
-from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import BaseUserManager,AbstractUser,AbstractBaseUser
-from enum import Enum
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator,validate_email
-from datetime import date
-
+from django.core.validators import validate_email
 # A model for "Roles" table
 class Roles(models.Model):
     role_id=models.AutoField(primary_key=True,auto_created=True)

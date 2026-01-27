@@ -1,5 +1,4 @@
 
-
 from functools import wraps
 from django.http import HttpRequest, HttpResponseForbidden
 

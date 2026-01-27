@@ -1,9 +1,5 @@
-from django.http import Http404
+from django.http import HttpRequest
 from .models import *
-# from django.http import JsonResponse,HttpRequest
-from accounts.RequiredImports import *
-import string
-import random
 
 def get_group_object(group_id:int):
     try:

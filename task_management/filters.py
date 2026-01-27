@@ -1,8 +1,8 @@
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from accounts.models import Profile, Roles,Designation
+from django.http import HttpRequest, JsonResponse
+from accounts.models import Profile
 from django.db.models import Q,F
 from accounts.views import status
-from accounts.filters import get_user_profile_object,get_users_Name
+from accounts.filters import get_users_Name
 from task_management.models import *
 from accounts.filters import get_role_object,get_designation_object
 
@@ -83,7 +83,7 @@ def get_assignees(task:Task):
 # endpoint for "Created_Tasks"-{{baseurl}}/tasks/viewTasks/?type= 
 # endpoint for "Assigned_Reported"-{{baseurl}}/tasks/viewAssignedTasks/?type= 
 def get_tasks_by_type(request:HttpRequest,type:str="all",self_created: bool=True):
-    
+
     if type.lower()=="all" and self_created:
         tasks=Task.objects.filter(created_by=request.user)
         task_data=[]

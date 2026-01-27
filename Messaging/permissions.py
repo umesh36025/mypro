@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from accounts.RequiredImports import *
-from .filters import *
+from accounts.filters import get_user_role
+from .models import GroupChats
 
 def has_group_create_or_add_member_permission(user:User):
     if user.is_superuser:

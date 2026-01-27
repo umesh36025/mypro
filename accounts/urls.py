@@ -21,7 +21,6 @@ admin_urls= [
     path('admin/viewEmployee/<slug:u>/', views.view_employee, name='users'),
     path('admin/changePassword/<slug:u>/', views.changePassword, name='users'),
 ]
-
 urlpatterns =sort_urls+session_urls+employee_urls+admin_urls
 
 
