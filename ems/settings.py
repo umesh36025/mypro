@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "task_management",
     "Messaging",
     "QuaterlyReports",
+    "adminpanel",
     # "channels",
     "maintenance",
     # 'accounts.apps.AccountsConfig',
