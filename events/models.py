@@ -18,7 +18,6 @@ class Room(models.Model):
     def __str__(self):
         return self.name
 
-
 class BookingStatus(models.Model):
     status_name = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
@@ -29,50 +28,35 @@ class BookingStatus(models.Model):
 
     def __str__(self):
         return self.status_name
-
-# ========================
-# 1. BOOK SLOT
-# ========================
-
 class BookSlot(models.Model):
-
-    meeting_title = models.CharField(max_length=255)
-    start_datetime = models.DateTimeField()
-    end_datetime = models.DateTimeField()
-    room = models.ForeignKey(
-        Room,
-        on_delete=models.CASCADE,
-        related_name="bookings"
-    )
-    description = models.TextField(blank=True, null=True)
-    MEETING_TYPE_CHOICES = [
-        ("individual", "Individual"),
-        ("group", "Group Meeting"),
-    ]
-    meeting_type = models.CharField(
-        max_length=20,
-        choices=MEETING_TYPE_CHOICES
-    )
-    status = models.ForeignKey(
-        BookingStatus,
-        on_delete=models.CASCADE,
-        related_name="bookings",
-        null=True,
-        blank=True
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
+    MEETING_TYPE_CHOICES = [("individual", "Individual"),("group", "Group Meeting"),]
     
+    meeting_title = models.CharField(max_length=255)
+    date=models.DateField(null=True)
+    start_time=models.TimeField(null=True)
+    end_time = models.TimeField(null=True)
+    room = models.ForeignKey(Room,on_delete=models.CASCADE,related_name="bookings")
+    description = models.TextField(blank=True, null=True)
+    meeting_type = models.CharField(max_length=20,choices=MEETING_TYPE_CHOICES)
+    status = models.ForeignKey(BookingStatus,on_delete=models.CASCADE,related_name="bookings",null=True,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by=models.ForeignKey(User,on_delete=models.CASCADE,related_name="creater",null=True)
+    members=models.ManyToManyField(User,through="Slotmembers")
     class Meta:
         db_table='events"."Slots'
         verbose_name="Slot"
-
+        
     def __str__(self):
         return self.meeting_title
-
-# ========================
-# 2. TOUR
-# ========================
-
+class SlotMembers(models.Model):
+    slot=models.ForeignKey(BookSlot,on_delete=models.CASCADE)
+    member=models.ForeignKey(User,on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table='events"."SlotMember'
+        verbose_name="Slotmember"
+        unique_together = ("slot", "member")
+        ordering=["slot"]
 class Tour(models.Model):
     tour_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
@@ -90,7 +74,6 @@ class Tour(models.Model):
         ordering=["-starting_date"]
     def __str__(self):
         return self.tour_name
-
 class tourmembers(models.Model):
     tour=models.ForeignKey(Tour,on_delete=models.CASCADE)
     member=models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True)
@@ -100,10 +83,6 @@ class tourmembers(models.Model):
         verbose_name="tourmember"
         unique_together = ("tour", "member")
         ordering=["tour"]
-# ========================
-# 3. HOLIDAY
-# ========================
-
 class Holiday(models.Model):
     FIXED = "fixed"
     UNFIXED = "unfixed"
@@ -113,7 +92,7 @@ class Holiday(models.Model):
         (UNFIXED, "Unfixed"),
     ]
 
-    date = models.DateField()
+    date = models.DateField(unique=True)
     name = models.CharField(max_length=255)
     holiday_type = models.CharField(
         max_length=10,
@@ -122,26 +101,21 @@ class Holiday(models.Model):
     )
     
     class Meta:
-        db_table='task_management"."Holiday'
+        db_table='holiday'
         verbose_name="Holiday"
         verbose_name_plural = "Holiday"
         ordering=["date"]
 
     def __str__(self):
         return f"{self.name}-{self.date}"
-
-# ========================
-# 4. EVENTS
-# ========================
-
 class Event(models.Model):              
     title = models.CharField(max_length=255, default="Untitled Event")
     motive = models.TextField(null=True)
     date = models.DateField()
-    time = models.TimeField()  
+    time = models.TimeField()
     
     class Meta:
-        db_table='task_management"."Event'
+        db_table='event'
         verbose_name="Event"
         ordering=["date"]               
 

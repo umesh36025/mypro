@@ -55,6 +55,3 @@ def task_edit_and_create_logs(sender,created,instance:Task, **kwargs):
 @receiver(post_save, sender=Task)
 def task_status_change_logs(sender,instance:Task, **kwargs):
     ...
-
-        
-        

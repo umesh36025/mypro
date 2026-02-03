@@ -131,7 +131,7 @@ def get_all_employees(request: HttpRequest):
                     "function":None}
                 users_data.append(user)
                 
-        return  JsonResponse(users_data,safe=False)
+        return  JsonResponse(users_data,safe=False,status=status.HTTP_200_OK)
 
 # get the session data of a logged_in user.
 @login_required

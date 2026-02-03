@@ -1,7 +1,11 @@
+from ems.auth_utils import CsrfExemptSessionAuthentication
 from rest_framework.viewsets import ModelViewSet
 import requests
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
+
+from events.permissions import IsAdminOrMD
+from rest_framework.permissions import IsAuthenticated,AllowAny
 from .models import Holiday, BookSlot, Tour, Event, Room, BookingStatus
 from .serializers import (
     HolidaySerializer,
@@ -15,6 +19,24 @@ from .serializers import (
 class BookSlotViewSet(ModelViewSet):
     queryset = BookSlot.objects.all()
     serializer_class = BookSlotSerializer
+    # authentication_classes = [CsrfExemptSessionAuthentication]
+    permission_classes=[IsAuthenticated]
+    
+    
+    def perform_create(self, serializer):
+        # This will override/ensure the created_by field is the logged-in user
+        serializer.save(created_by=self.request.user)
+
+class RoomViewSet(ModelViewSet):
+    queryset = Room.objects.all()
+    serializer_class = RoomSerializer
+    permission_classes=[AllowAny]
+    
+    
+class BookingStatusViewset(ModelViewSet):
+    queryset = BookingStatus.objects.all()
+    serializer_class = BookingStatusSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
 
 @api_view(["GET"])
 def rooms_dropdown(request):
@@ -28,28 +50,32 @@ def rooms_dropdown(request):
 class TourViewSet(ModelViewSet):
     queryset = Tour.objects.all()
     serializer_class = TourSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
 
 class HolidayViewSet(ModelViewSet):
     queryset = Holiday.objects.all().order_by("date")
     serializer_class = HolidaySerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
+    permission_classes = [IsAuthenticated,IsAdminOrMD] 
 
-    # ✅ /api/holidays/fixed/
-    @action(detail=False, methods=["get"], url_path="fixed")
-    def fixed_holidays(self, request):
-        qs = self.queryset.filter(holiday_type="fixed")
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+    # # ✅ /api/holidays/
+    # @action(detail=False, methods=["get"], url_path="fixed")
+    # def fixed_holidays(self, request):
+    #     qs = self.queryset.filter(holiday_type="fixed")
+    #     serializer = self.get_serializer(qs, many=True)
+    #     return Response(serializer.data)
 
-    # ✅ /api/holidays/unfixed/
-    @action(detail=False, methods=["get"], url_path="unfixed")
-    def unfixed_holidays(self, request):
-        qs = self.queryset.filter(holiday_type="unfixed")
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+    # # ✅ /api/holidays/unfixed/
+    # @action(detail=False, methods=["get"], url_path="unfixed")
+    # def unfixed_holidays(self, request):
+    #     qs = self.queryset.filter(holiday_type="unfixed")
+    #     serializer = self.get_serializer(qs, many=True)
+    #     return Response(serializer.data)
 
 class EventViewSet(ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+    authentication_classes = [CsrfExemptSessionAuthentication]
 
 @api_view(["GET"])
 def status_dropdown(request):

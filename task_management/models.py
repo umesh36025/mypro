@@ -81,7 +81,7 @@ class TaskStatusChangeLogs(models.Model):
     
 class AssingnedTasksCount(models.Model):
     assignee=models.OneToOneField(User,primary_key=True,db_column="employee_id",to_field="username",on_delete=models.CASCADE)
-    count_sos=models.IntegerField(db_column="total_SOS",default=0,)
+    count_SOS=models.IntegerField(db_column="total_SOS",default=0,)
     count_1_Day=models.IntegerField(db_column="total_1_Day",default=0)
     count_10_Day=models.IntegerField(db_column="total_10_Day",default=0)
     count_Monthly=models.IntegerField(db_column="total_Monthly",default=0)
@@ -89,11 +89,11 @@ class AssingnedTasksCount(models.Model):
     class Meta:
         db_table="Assigned_tasks_count_by_type"
         verbose_name="Assigned_tasks_count_by_type"
-        ordering=["-count_sos","-count_1_Day"]
+        ordering=["-count_SOS","-count_1_Day"]
         
 class CreatedTasksCount(models.Model):
     creator=models.OneToOneField(User,primary_key=True,db_column="employee_id",to_field="username",on_delete=models.CASCADE)
-    count_sos=models.IntegerField(db_column="total_SOS",default=0,)
+    count_SOS=models.IntegerField(db_column="total_SOS",default=0,)
     count_1_Day=models.IntegerField(db_column="total_1_Day",default=0)
     count_10_Day=models.IntegerField(db_column="total_10_Day",default=0)
     count_Monthly=models.IntegerField(db_column="total_Monthly",default=0)
@@ -101,7 +101,7 @@ class CreatedTasksCount(models.Model):
     class Meta:
         db_table='task_management"."Created_tasks_count_by_type'
         verbose_name="Created_tasks_count_by_type"
-        ordering=["-count_sos","-count_1_Day"]
+        ordering=["-count_SOS","-count_1_Day"]
         
 class TaskMessage(models.Model):
     task = models.ForeignKey(

@@ -6,10 +6,7 @@ from .models import (
     BillCategory,
     Bill,
     ExpenseTracker,
-    Vendor,
-    )
-
-
+    Vendor)
 # 1 AssetType Serializer (Dropdown)
 class AssetTypeSerializer(serializers.ModelSerializer):
     class Meta:
