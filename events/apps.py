@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class EventsConfig(AppConfig):
+class SchedulerConfig(AppConfig):
     name = 'events'

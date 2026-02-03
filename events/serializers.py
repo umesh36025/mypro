@@ -6,6 +6,16 @@ class BookSlotSerializer(serializers.ModelSerializer):
         model = BookSlot
         fields = '__all__'
 
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = ["id", "name"]
+
+class BookingStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookingStatus
+        fields = ["id", "status_name"]
+
 class TourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tour
@@ -21,3 +31,4 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = '__all__'
+        

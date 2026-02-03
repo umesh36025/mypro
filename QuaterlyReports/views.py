@@ -201,15 +201,16 @@ def get_meeting_head_and_subhead(request:HttpRequest,user_id:str):
 @csrf_exempt       
 def add_meeting_head_subhead(request:HttpRequest):
     data=load_data(request)
-    quater=data.get("quater")
-    month=data.get("month")
-    head=data.get("head")
-    sub_head=data.get("sub_head")
-    sub_d1=data.get("sub_d1")
-    sub_d2=data.get("sub_d2")
-    sub_d3=data.get("sub_d3")
+    quater=data.get("quater").strip()
+    month=data.get("month").strip()
+    head=data.get("head").strip()
+    sub_head=data.get("sub_head").strip()
+    sub_d1=data.get("sub_d1").strip()
+    sub_d2=data.get("sub_d2").strip()
+    sub_d3=data.get("sub_d3").strip()
+    department=data.get("dept").strip()
     try:
-        department=get_department_obj(dept=data.get("dept"))
+        department=get_department_obj(dept=department)
         quater_object=Quaters.objects.get(quater=quater)
     except Exception as e:
         print(e)
