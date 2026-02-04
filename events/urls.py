@@ -3,17 +3,12 @@ from django.urls import path, include
 
 
 from .views import (
-    rooms_dropdown,
-    status_dropdown,
-    location_dropdown,
     BookSlotViewSet,
     TourViewSet,
     HolidayViewSet,
     EventViewSet,
     RoomViewSet,
     BookingStatusViewset
-    
-
 )
 
 router = DefaultRouter()

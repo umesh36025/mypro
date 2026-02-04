@@ -18,6 +18,7 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(f"{BASE_DIR}/.env")
+# load_dotenv(f"{BASE_DIR}/development.env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -25,9 +26,9 @@ load_dotenv(f"{BASE_DIR}/.env")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("Debug",True)
 
-ALLOWED_HOSTS = ["*","localhost:3000/","localhost:3000","employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com/","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000"]
+ALLOWED_HOSTS = ["*","localhost:3000/","localhost:3000","employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com/","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000","http://192.168.41.55:3000/"]
                 #  "127.0.0.1:8000/","http://192.168.41.120:3000/","http://192.168.41.120:3001/","http://192.168.41.120:3000","http://192.168.41.120:3001","192.168.41.120:3000/","192.168.41.120:3001/*"]
 
 REST_FRAMEWORK = {
@@ -180,15 +181,15 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://planeteye-employee-portal.onrender.com",
+    "https://planeteye-employee-portal.onrender.com","http://localhost:8000","http://127.0.0.1:8000","http://192.168.41.55:3000"
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com",
-    "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/"
+    "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/","http://192.168.41.55:3000/"
 ]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
+SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -208,10 +209,9 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',]
     
-SESSION_COOKIE_AGE = 1800
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SAMESITE = "None"
-CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE","None")
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE","None")
 # LOGGING = {
 #     "version": 1,
 #     "handlers": {

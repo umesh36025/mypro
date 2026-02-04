@@ -12,3 +12,4 @@ adminpanel/__pycache__
 events/__pycache__
 ActionableGoals.csv
 FunctionGoals.csv
+development.env

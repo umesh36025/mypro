@@ -17,7 +17,6 @@ class Room(models.Model):
 
     def __str__(self):
         return self.name
-
 class BookingStatus(models.Model):
     status_name = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
@@ -35,12 +34,12 @@ class BookSlot(models.Model):
     date=models.DateField(null=True)
     start_time=models.TimeField(null=True)
     end_time = models.TimeField(null=True)
-    room = models.ForeignKey(Room,on_delete=models.CASCADE,related_name="bookings")
+    room = models.ForeignKey(Room,on_delete=models.CASCADE,related_name="slotroom")
     description = models.TextField(blank=True, null=True)
     meeting_type = models.CharField(max_length=20,choices=MEETING_TYPE_CHOICES)
-    status = models.ForeignKey(BookingStatus,on_delete=models.CASCADE,related_name="bookings",null=True,blank=True)
+    status = models.ForeignKey(BookingStatus,on_delete=models.CASCADE,related_name="slotstatus",null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by=models.ForeignKey(User,on_delete=models.CASCADE,related_name="creater",null=True)
+    created_by=models.ForeignKey(User,on_delete=models.CASCADE,related_name="slotcreater",null=True)
     members=models.ManyToManyField(User,through="Slotmembers")
     class Meta:
         db_table='events"."Slots'
@@ -49,8 +48,8 @@ class BookSlot(models.Model):
     def __str__(self):
         return self.meeting_title
 class SlotMembers(models.Model):
-    slot=models.ForeignKey(BookSlot,on_delete=models.CASCADE)
-    member=models.ForeignKey(User,on_delete=models.CASCADE)
+    slot=models.ForeignKey(BookSlot,on_delete=models.CASCADE,related_name="slotmembers")
+    member=models.ForeignKey(User,on_delete=models.CASCADE,related_name="inslots")
     
     class Meta:
         db_table='events"."SlotMember'
@@ -62,12 +61,13 @@ class Tour(models.Model):
     location = models.CharField(max_length=255)
     duration_days = models.PositiveIntegerField()
     starting_date = models.DateField(blank=True, null=True)
-    member=models.ManyToManyField(User,through="tourMembers",related_name="members")
+    members=models.ManyToManyField(User,through="tourMembers",related_name="tourmembers")
+    created_by=models.ForeignKey(User,on_delete=models.CASCADE,null=True,related_name="tourcreator")
     # checkbox list (empty allowed)
     total_members=models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         db_table='events"."Tour'
         verbose_name="tour"
@@ -75,9 +75,8 @@ class Tour(models.Model):
     def __str__(self):
         return self.tour_name
 class tourmembers(models.Model):
-    tour=models.ForeignKey(Tour,on_delete=models.CASCADE)
-    member=models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True)
-    
+    tour=models.ForeignKey(Tour,on_delete=models.CASCADE,related_name="tourmembers")
+    member=models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name="intour")
     class Meta:
         db_table='events"."tourmembers'
         verbose_name="tourmember"

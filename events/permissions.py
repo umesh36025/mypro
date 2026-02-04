@@ -1,7 +1,7 @@
-from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated,AllowAny,BasePermission
 from django.http import HttpRequest
 
-class IsAdminOrMD(permissions.BasePermission):
+class IsAdminOrMD(BasePermission):
     """
     Custom permission to only allow Admins or users with role 'MD'.
     Assumes your User model has a 'role' attribute or similar.
