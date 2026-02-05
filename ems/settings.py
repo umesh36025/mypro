@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "task_management",
     "Messaging",
     "events",
+    "project",
     "QuaterlyReports",
     "adminpanel",
     # "channels",
@@ -122,7 +123,7 @@ DATABASES =  {
         "HOST": os.getenv("POSTGRES_HOST"),
         "PORT": os.getenv("POSTGRES_PORT"),
         "OPTIONS":{
-            'options':'-c search_path=quatery_reports,login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
+            'options':'-c search_path=project,quatery_reports,login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
         },
          'CONN_MAX_AGE': 60
     }
@@ -155,11 +156,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
-# USE_TZ = True
+USE_TZ = True
 
 # AUTH_USER_MODEL="accounts.Profile"
 # Static files (CSS, JavaScript, Images)

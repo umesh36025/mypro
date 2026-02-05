@@ -1,0 +1,44 @@
+from django.db import models
+from accounts.models import User
+from task_management.models import TaskStatus
+
+# Create your models here.
+class Project(models.Model):
+    # Project status choices
+    name = models.CharField(max_length=255,unique=True)
+    description = models.TextField(null=True)
+    # ForeignKey creates a one-to-many relationship (One initiator per project)
+    initiator = models.ForeignKey(User,on_delete=models.CASCADE,related_name='initiated_projects')
+    # ManyToManyField allows multiple participants per project and multiple projects per user
+    participants = models.ManyToManyField(User,related_name='participating_projects',blank=True,through="ProjectParticipant")
+    status = models.ForeignKey(TaskStatus,on_delete=models.CASCADE,null=True,related_name="project_status")
+    deadline = models.DateField()
+    # Automatically sets the field to now when the object is first created
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Automatically updates the field to now every time the object is saved
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table='project"."Project'
+        verbose_name='Project'
+        ordering=["deadline"]
+        
+    def __str__(self):
+        return self.name
+    
+class ProjectParticipant(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Enforces uniqueness at the database level
+        db_table='project"."ProjectParticipant'
+        verbose_name='ProjectParticipant'
+        ordering=["project"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'user'], 
+                name='unique_project_participant'
+            )
+        ]
