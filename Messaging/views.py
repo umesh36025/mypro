@@ -1,4 +1,4 @@
-from accounts.filters import get_users_Name
+from accounts.filters import get_user_object, get_users_Name
 from accounts.models import Profile,User
 from .models import *
 from .permissions import *
@@ -326,3 +326,7 @@ def search_or_find_conversation(request:HttpRequest):
         profiles=Profile.objects.exclude(Employee_id=request.user).order_by("Name").values("Names")
     
     return JsonResponse(list(profiles),safe=False)
+
+def delete_message(request: HttpRequest,chat_id:str,msg_id:int):
+    ...
+    

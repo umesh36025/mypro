@@ -188,8 +188,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/","http://192.168.41.55:3000/"
 ]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
-SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
+if os.getenv("is_developement")=="True":
+    ...
+else:
+    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
+    SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',

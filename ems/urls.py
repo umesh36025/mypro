@@ -30,8 +30,10 @@ urlpatterns = [
     path('eventsapi/', include('events.urls'),name="eventsapi")
 ]
 
-if not settings.DEBUG:
+if settings.DEBUG:
     urlpatterns += static(
         settings.MEDIA_URL,
         document_root=settings.MEDIA_ROOT
     )
+    # print(type(settings.DEBUG))
+    # print("debug is true")

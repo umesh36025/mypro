@@ -179,16 +179,14 @@ class MeetingSerializer(serializers.ModelSerializer):
     meeting_room= serializers.SlugRelatedField(
         queryset=Room.objects.all(),
         slug_field="name")
-    
-
     # For READ: Show detailed info (Username + Full Name)
     user_details = serializers.SerializerMethodField()
-    schedule_time = serializers.SerializerMethodField()
+    # schedule_time = serializers.SerializerMethodField()
     class Meta:
         model = Meeting
         fields = [
             'id', 'users', 'user_details', 'meeting_type', 
-            'time', 'meeting_room', 'is_active',"schedule_time"
+            'time', 'meeting_room', 'is_active',"created_at"
         ]
 
     def get_user_details(self, obj):
@@ -199,8 +197,8 @@ class MeetingSerializer(serializers.ModelSerializer):
             } for user in obj.users.all()
         ]
         
-    def get_schedule_time(self,obj:Meeting):
-        schedule_time=obj.created_at+timedelta(minutes=obj.time)
-        return schedule_time.strftime("%d/%m/%Y, %H:%M:%S")
+    # def get_schedule_time(self,obj:Meeting):
+    #     schedule_time=obj.created_at+timedelta(minutes=obj.time)
+    #     return schedule_time.strftime("%d/%m/%Y, %H:%M:%S")
         
         
