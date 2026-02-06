@@ -64,7 +64,7 @@ class FunctionsGoals(models.Model):
     
 class ActionableGoals(models.Model):
     FunctionGoal=models.ForeignKey(FunctionsGoals,on_delete=models.CASCADE,db_column="goal_id")
-    purpose=models.CharField(max_length=100,null=False)
+    purpose=models.CharField(max_length=255,null=False)
             
     class Meta:
         db_table= 'quatery_reports"."ActionableGoals'

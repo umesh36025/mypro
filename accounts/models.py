@@ -48,9 +48,7 @@ class Profile(models.Model):
         verbose_name = "Employee Profile"
         verbose_name_plural = "Employees Profile"
         ordering=["-Name"]
-        indexes = [
-        models.Index(fields=['Role',"Designation"]),
-    ]
+        indexes = [models.Index(fields=['Role',"Designation"]),]
         
     def __str__(self):
         return f"{self.Employee_id.username} - {self.Role}"
@@ -84,7 +82,7 @@ class Departments(models.Model):
     class Meta:
         db_table= 'team_management"."Departments'
         verbose_name_plural = "departments"
-        ordering=["dept_name"]
+        # ordering=["dept_name"]
     ...
 
 class Functions(models.Model):
@@ -93,14 +91,7 @@ class Functions(models.Model):
         db_table= 'team_management"."Functions'
         verbose_name_plural = "Functions"
     ...
-    
-# obj=Quaters.create_quater(quater="Q3",starting_month=9,ending_month=12)
-# Financial_years_Quaters_Mapping.add_quaterwise_year(quater=obj,financial_year_start=2026,financial_year_end=2027)
-# Roles.objects.create(role_name="Admin")       
-# Branch.objects.create(branch_name="Farm Core")
-# Designation.objects.create(designation="Python Developer")
-# for i in ["NPD","MMR","RG","HC","IP"]:
-#     Functions.objects.create(function=i)
+
 
 
 

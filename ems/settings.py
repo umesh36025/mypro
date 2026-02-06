@@ -182,18 +182,21 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://planeteye-employee-portal.onrender.com","http://localhost:8000","http://127.0.0.1:8000","http://192.168.41.55:3000"
+    "https://planeteye-employee-portal.onrender.com","http://localhost:8000","http://127.0.0.1:8000","http://192.168.41.55:3000",
 ]
 CSRF_TRUSTED_ORIGINS = [
-    "https://employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com",
+    "https://employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000",
     "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/","http://192.168.41.55:3000/"
 ]
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if os.getenv("is_developement")=="True":
     ...
 else:
     CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
     SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
+    SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE","None")
+    CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE","None")
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -214,8 +217,7 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',]
     
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE","None")
-CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE","None")
+
 # LOGGING = {
 #     "version": 1,
 #     "handlers": {

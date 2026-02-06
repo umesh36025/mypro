@@ -19,7 +19,7 @@ def create_employee_login(request: HttpRequest):
     if verify_method:
         return verify_method
     fields=['Employee_id','password','Name','Role','Email_id','Designation','Date_of_join','Date_of_birth','Branch','Photo_link',"Department","Teamlead","Function"]
-    not_required_field=["Branch","Designation","Department","Teamlead","Function"]
+    not_required_field=["Branch","Designation","Department","Teamlead","Function","Photo_link"]
     login_values={}
     profile_values={}
     try:
@@ -81,8 +81,7 @@ def create_employee_login(request: HttpRequest):
                         profile_values["Function"]=get_function
                 get_role=get_object_or_404(Roles,role_name=profile_values["Role"])
                 profile_values["Role"]=get_role
-                # foreign key references to Branch and Designation in the table Profile
-                # foreign key reference to Role in the table Profile
+                Profile.objects.create(**profile_values)
             except Http404 as e:
                 print(e)
                 return  JsonResponse({"messege":f"{e}"})
@@ -90,7 +89,6 @@ def create_employee_login(request: HttpRequest):
                 print(e)
                 return JsonResponse({"messege":f"{e}"})
             else:
-                Profile.objects.create(**profile_values)
                 return JsonResponse({"messege":"user profile created successfully"},status=status.HTTP_200_OK)
             
 #Get a view of all employees/users present in the record. 
@@ -227,13 +225,9 @@ def update_profile(request: HttpRequest,username):
             data=request.POST
             files=request.FILES
             for i in fields:
-                if i!= "Photo_link":
-                    field_value=data.get(i)
-                else:
-                    field_value=files.get(i)
-                
+                field_value=files.get(i)
                 if not field_value and i not in not_required_fields:
-                    print("error1")
+                    # print("error1")
                     return JsonResponse({"messege":f"{i} is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
                 elif i in not_required_fields and not field_value:
                     ...
@@ -269,11 +263,6 @@ def update_profile(request: HttpRequest,username):
             print(e)
             return  JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            photo= profile_values.pop("Photo_link",None)
-            if profile.Photo_link and photo:
-                profile.Photo_link.delete(save=True)
-                profile.Photo_link=photo
-                profile.save(force_update=True)
             try:
                     Profile.objects.filter(Employee_id=user).update(**profile_values)
             except Http404 as e:
@@ -359,3 +348,48 @@ def get_teamLeads(request: HttpRequest):
     else:
         return JsonResponse(list(data),safe=False,status=status.HTTP_200_OK)
 
+@csrf_exempt
+@admin_required
+def update_photo(request: HttpRequest,username:str):
+    verify_method=verifyPost(request)
+    if verify_method:
+        verify_method
+    try:
+        user_obj=get_object_or_404(User,username=username)
+        user_profile=get_user_profile_object(user=user_obj)
+        data=request.FILES
+        users_name=user_profile.Name
+        if not data:
+            return JsonResponse({"messege":f"upload file is missing"},status=status.HTTP_406_NOT_ACCEPTABLE)
+        photo_link=data.get("Photo_link")
+        old_photo=user_profile.Photo_link
+        if old_photo and photo_link:
+            old_photo.delete(save=True)
+            user_profile.Photo_link=photo_link
+            user_profile.save(force_update=True)
+        else:
+            user_profile.Photo_link=photo_link
+            user_profile.save(force_update=True)
+    except Http404 as e:
+        print(e)
+        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(e)
+        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
+    else:
+        return JsonResponse({"messege":f"{users_name}'s Photo updated successfully"},status=status.HTTP_205_RESET_CONTENT)
+
+   
+def FetchImage(request: HttpRequest,username:str):
+    try:
+        user_obj=get_object_or_404(User,username=username)
+        user_profile=get_user_profile_object(user_obj)
+        if user_profile.Photo_link:
+            ...
+        return JsonResponse({"message":"File not found"},status=status.HTTP_404_NOT_FOUND)
+    except Http404 as e:
+        print(e)
+        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(e)
+        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)

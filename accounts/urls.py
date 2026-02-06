@@ -20,6 +20,7 @@ admin_urls= [
     path('admin/deleteEmployee/<slug:u>/', views.delete_user_profile, name='users'),
     path('admin/viewEmployee/<slug:u>/', views.view_employee, name='users'),
     path('admin/changePassword/<slug:u>/', views.changePassword, name='users'),
+    path('admin/changePhoto/<slug:username>/', views.update_photo, name='users')
 ]
 urlpatterns =sort_urls+session_urls+employee_urls+admin_urls
 

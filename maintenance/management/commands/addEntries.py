@@ -1,0 +1,19 @@
+from django.core.management.base import BaseCommand
+from accounts.models import *
+ 
+class Command(BaseCommand):
+    help = "add entries to database"
+
+    def handle(self, *args, **kwargs):
+        # Departments.objects.create(dept_name="None")
+        # Functions.objects.create(function="None")
+        # Designation.objects.filter(designation="add")
+        # Roles.objects.create(role_name="HR")
+        # Branch.objects.create(branch_name="None")
+
+        # for i in ["NPD","MMR","RG","HC","IP"]:
+        #     Functions.objects.create(function=i)
+        
+        # obj=Quaters.create_quater(quater="Q3",starting_month=9,ending_month=12)
+        # Financial_years_Quaters_Mapping.add_quaterwise_year(quater=obj,financial_year_start=2026,financial_year_end=2027)
+        ...

@@ -1,6 +1,6 @@
 from django.http import HttpRequest, JsonResponse
 from accounts.models import *
-from datetime import date
+from datetime import date,datetime,timedelta
 from rest_framework import status
 
 # get an user's "Profile" object from the user's "User" object
@@ -148,3 +148,7 @@ def completed_years_and_days(start_date: date) -> str:
     days = (end_date - anniversary).days
 
     return f"{years} years {days} days"
+
+def get_created_time_format(datetime:datetime):
+    IST_time=datetime+timedelta(hours=5,minutes=30)
+    return IST_time.strftime("%d/%m/%Y, %H:%M:%S")

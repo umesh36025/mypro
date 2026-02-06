@@ -56,13 +56,14 @@ def create_group(request:HttpRequest):
                 if (i=="group_name" or i=="participants") and not data.get(i):
                     return JsonResponse({"message":"Participants are required"},status=status.HTTP_406_NOT_ACCEPTABLE)
                 elif i=="participants":
-                    temp_dict[i]=len(data.get(i))+1
+                    temp_dict[i]=len(data.get(i))
                 else:
                     temp_dict[i]=data.get(i)
                 
             temp_dict["created_by"]=request.user
             temp_dict["group_id"]=generate_group_id()
             print(temp_dict)
+            # print(temp_dict)
             chat=GroupChats.objects.create(**temp_dict)
             chat.save()
         else:
@@ -78,7 +79,8 @@ def create_group(request:HttpRequest):
                 return JsonResponse({"Messsage":"Group not created"},status=status.HTTP_304_NOT_MODIFIED)
             else:
                     participants_data:dict=data.get("participants")
-                    participants_data.update({f"{current_user_name}":request.user.username})
+                    print(participants_data)
+                    # participants_data.update({f"{current_user_name}":request.user.username})
                     for i in participants_data:
                         user=get_user_object(username=participants_data[i])
                         if isinstance(user,User):
@@ -97,9 +99,10 @@ def show_created_groups(request: HttpRequest):
     groups=GroupChats.objects.filter(created_by=request.user).order_by("-created_at")
     info=[{
         "group_id":g.group_id,
+        "total_participant":g.participants,
         "name":g.group_name,
         "description":g.description,
-        "created_at":g.created_at.strftime("%d/%m/%y-%H:%M")
+        "created_at":get_created_time_format(g.created_at)
     } for g in groups]
     
     return JsonResponse(info,safe=False)
@@ -188,23 +191,26 @@ def delete_user(request: HttpRequest,group_id:str,user_id:str):
     if verify_method:
         return verify_method
     group_obj=get_object_or_404(GroupChats,group_id=group_id)
+    user_obj=get_object_or_404(User,username=user_id)
     check_permiss=has_group_create_or_add_member_permission(request.user)
     try:
         if check_permiss:
             present_members=get_group_members(group_id=group_id)
             data=json.loads(present_members.content.decode('utf-8'))
             can_Delete=False
-            for i in data:
-                if  user_id==request.user.username:
-                    return JsonResponse({"Message":"self deletion is prohibited"},status=status.HTTP_404_NOT_FOUND) 
-                elif group_obj.created_by.username==user_id:
+            # for i in data:
+            if user_id==request.user.username:
+                    return JsonResponse({"Message":"self-deletion is prohibited"},status=status.HTTP_404_NOT_FOUND) 
+            elif group_obj.created_by.username==user_id:
                     return JsonResponse({"Message":"Cannot delete the Group Admin"},status=status.HTTP_404_NOT_FOUND)
-                elif i["participant"]==user_id:
-                    can_Delete=True
+            elif get_user_role(user_obj)=="MD":
+                    return JsonResponse({"Message":"Cannot delete MD from the group"},status=status.HTTP_404_NOT_FOUND)  
+            else:
+                can_Delete=True
                     
             if can_Delete:
-                user=get_object_or_404(User,username=user_id)
-                group_member_obj=GroupMembers.objects.filter(groupchat=group_obj,participant=user).first()
+                # user=get_object_or_404(User,username=user_id)
+                group_member_obj=GroupMembers.objects.filter(groupchat=group_obj,participant=user_obj).first()
                 if group_obj.participants>2:
                 # group_obj.participants=group_obj.participants-1
                     group_member_obj.delete()
@@ -244,7 +250,7 @@ def delete_group(request: HttpRequest,group_id:str):
         return group_obj
     except PermissionDenied:
         return JsonResponse({"message":"you cannot delete a Group."},status=status.HTTP_403_FORBIDDEN)
-    
+
 # The above code is a Python Django application that handles sending and retrieving messages in a chat
 # application. Here is a breakdown of the main functionalities:
 @csrf_exempt
@@ -282,14 +288,13 @@ def post_message(request,chat_id:str):
             chat_obj.save()
 
     return JsonResponse({"message":"Message sent successfully"},status=status.HTTP_201_CREATED)
-    
+
 @login_required
 def get_chats(request: HttpRequest,chat_id:str):
     request_method=verifyGet(request)
     if request_method:
         return request_method
     return get_messages(request=request,chat_id=chat_id)
-        
 
 @login_required
 def load_groups_and_chats(request: HttpRequest):
@@ -301,6 +306,7 @@ def load_groups_and_chats(request: HttpRequest):
     groups_info=[{
         "group_id":g.groupchat.group_id,
         "group_name":g.groupchat.group_name,
+        "created_by":get_users_Name(g.groupchat.created_by),
         "description":g.groupchat.description
     } for g in groups]
     chats_info=[{
@@ -328,4 +334,3 @@ def search_or_find_conversation(request:HttpRequest):
 
 def delete_message(request: HttpRequest,chat_id:str,msg_id:int):
     ...
-    
