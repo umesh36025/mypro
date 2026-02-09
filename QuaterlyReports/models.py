@@ -1,5 +1,6 @@
-from django.db import models
+# from django.db import models
 from accounts.models import *
+from ems.verify_methods import *
 from task_management.models import TaskStatus
 from task_management.filters import get_taskStatus_object
 from django.core.validators import MinValueValidator,MaxValueValidator
@@ -44,6 +45,11 @@ class Monthly_department_head_and_subhead(models.Model):
         db_table= 'team_management"."Monthly_department_wise_head_and_subhead'
         ...
 
+class GRPS(models.Model):
+    grp=models.CharField(max_length=10)
+    class Meta:
+        db_table= 'quatery_reports"."GRP'
+        ordering=["grp"]
 class UsersEntries(models.Model):
     month_and_quater_id=models.ForeignKey(Monthly_department_head_and_subhead,on_delete=models.CASCADE,db_column="month_quater",null=False)
     user=models.ForeignKey(User,on_delete=models.CASCADE,to_field="username",db_column="Employee_id",null=False)
@@ -61,42 +67,38 @@ class FunctionsGoals(models.Model):
     class Meta:
         db_table= 'quatery_reports"."FunctionGoals'
         ordering=["Function"]
-    
+
 class ActionableGoals(models.Model):
     FunctionGoal=models.ForeignKey(FunctionsGoals,on_delete=models.CASCADE,db_column="goal_id")
     purpose=models.CharField(max_length=255,null=False)
-            
+    grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,null=True)
     class Meta:
         db_table= 'quatery_reports"."ActionableGoals'
         ordering=["FunctionGoal"]
-    
+
 class FunctionsEntries(models.Model):
     goal=models.ForeignKey(ActionableGoals,on_delete=models.CASCADE,db_column="sub_goal_id",null=True)
     Creator=models.ForeignKey(User,on_delete=models.CASCADE,to_field="username",db_column="Employee_id",null=False)
     date=models.DateField(auto_now=False,auto_now_add=False)
+    time=models.TimeField(auto_now_add=True)
     status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,editable=True,null=False)
-    note=models.TextField(null=False)
+    note=models.TextField()
+    
     class Meta:
         db_table= 'quatery_reports"."FunctionsEntries'
-        ordering=["-date"]
+        ordering=["-date","-time"]
 
-class GRPS(models.Model):
-    grp=models.CharField(max_length=10)
-    
-    class Meta:
-        db_table= 'quatery_reports"."GRP'
-        ordering=["grp"]
-    
 class PlannedActions(models.Model):
-    grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,db_column="grp",null=False,verbose_name="grp")
-    action=models.TextField(null=False)
-    deadline=models.DateField(auto_now_add=False,auto_now=False)
-    assigned_to=models.ForeignKey(User,on_delete=models.CASCADE,db_column="assigned_to",null=False,verbose_name="assigned_help_to")
-    status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,db_column="status",null=False,verbose_name="status")
+    # grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,db_column="grp",null=False,verbose_name="grp")
+    # action=models.TextField(null=False)
+    # deadline=models.DateField(auto_now_add=False,auto_now=False)
+    # assigned_to=models.ForeignKey(User,on_delete=models.CASCADE,db_column="assigned_to",null=False,verbose_name="assigned_help_to")
+    # status=models.ForeignKey(TaskStatus,on_delete=models.CASCADE,db_column="status",null=False,verbose_name="status")
     
-    class Meta:
-        db_table= 'quatery_reports"."PlannedActions'
-        ordering=["grp","-deadline"]
+    # class Meta:
+    #     db_table= 'quatery_reports"."PlannedActions'
+    #     ordering=["grp","-deadline"]
+    ...
 class SalesStatistics(models.Model):
         grp=models.ForeignKey(GRPS,on_delete=models.CASCADE,db_column="grp",null=False,verbose_name="grp")
         Sale=models.IntegerField(null=True)
@@ -119,5 +121,3 @@ class SalesStatistics(models.Model):
             db_table= 'quatery_reports"."SalesStatistics'
             ordering=["grp"]
 # Create your models here.
-
-# data={"Marketing":[{"quater":"Q1","month":}]}

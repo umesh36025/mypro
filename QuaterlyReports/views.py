@@ -1,9 +1,12 @@
+from rest_framework.response import Response
 from accounts.filters import get_department_obj
-from ems.verify_methods import *
 from .models import *
 from task_management.filters import get_taskStatus_object
 from .filters import *
 from rest_framework import status
+from .serializers import FunctionsEntriesSerializer
+from rest_framework.decorators import api_view
+
 
 @csrf_exempt
 @login_required
@@ -221,3 +224,95 @@ def add_meeting_head_subhead(request:HttpRequest):
                                                                             Sub_Head_D1=sub_d1,Sub_Head_D2=sub_d2,Sub_Head_D3=sub_d3)
     
     return JsonResponse({"Message":"added successfully"})
+
+def get_functions_and_actionable_goals(request: HttpRequest):
+    # 1. Get the query parameter: /url/?function_name=IT
+    verify_method=verifyGet(request)
+    if verify_method:
+        return verify_method
+    query_data=request.GET
+    if not query_data:
+        return JsonResponse({"error": "Query parameter 'function_name' is required."}, status=400)
+    
+    function_name = query_data.get('function_name')
+    try:
+        # 2. Optimized Query using prefetch_related
+        # This fetches the Function and all related Goals/ActionableGoals in just 3 queries total.
+        function_obj = Functions.objects.prefetch_related(
+            'functionsgoals_set__actionablegoals_set'
+        ).get(function__iexact=function_name)
+
+        # 3. Manual Data Construction
+        functional_goals_list = []
+        
+        # Accessing prefetched data
+        for f_goal in function_obj.functionsgoals_set.all():
+            actionable_goals = []
+            for a_goal in f_goal.actionablegoals_set.all():
+                actionable_goals.append({
+                    "id": a_goal.id,
+                    "purpose": a_goal.purpose,
+                    "grp_id": a_goal.grp.grp  # Accessing foreign key ID directly
+                })
+
+            functional_goals_list.append({
+                "id": f_goal.id,
+                "main_goal": f_goal.Maingoal,
+                "actionable_goals": actionable_goals
+            })
+
+        response_data = {
+            "function": function_obj.function,
+            "functional_goals": functional_goals_list
+        }
+
+        return JsonResponse(response_data, safe=False)
+
+    except Functions.DoesNotExist:
+        return JsonResponse({"error": f"Function '{function_name}' not found."}, status=404)
+    ...
+    
+
+
+@api_view(['GET', 'POST'])
+def entry_list_create(request):
+    # FETCH ALL (Read)
+    if request.method == 'GET':
+        entries = FunctionsEntries.objects.all()
+        serializer = FunctionsEntriesSerializer(entries, many=True)
+        return Response(serializer.data)
+
+    # ADD ENTRY (Create)
+    elif request.method == 'POST':
+        serializer = FunctionsEntriesSerializer(data=request.data)
+        if serializer.is_valid():
+            # Injecting the current user as the Creator
+            serializer.save(Creator=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def entry_detail_update_delete(request, pk):
+    try:
+        entry = FunctionsEntries.objects.get(pk=pk)
+    except FunctionsEntries.DoesNotExist:
+        return Response({'error': 'Entry not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # FETCH SINGLE ENTRY
+    if request.method == 'GET':
+        serializer = FunctionsEntriesSerializer(entry)
+        return Response(serializer.data)
+
+    # UPDATE ENTRY (Status and Content)
+    elif request.method == 'PUT':
+        # partial=True allows updating just 'status' or 'note' without sending all fields
+        serializer = FunctionsEntriesSerializer(entry, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE ENTRY
+    elif request.method == 'DELETE':
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

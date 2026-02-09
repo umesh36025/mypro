@@ -5,6 +5,8 @@ from .permissions import *
 from .snippet import add_participant_to_groupMembers
 from .filters import *
 
+# get Existing chats or initiate a new conversation with new user
+# endpoint-{{baseurl}}/messaging/startChat/
 @csrf_exempt
 @login_required
 def access_or_create_conversation(request: HttpRequest):
@@ -13,7 +15,7 @@ def access_or_create_conversation(request: HttpRequest):
         if verify_method:
             return verify_method
         data=load_data(request)
-        print(data)
+        # print(data)
         try:
             user1=User.objects.get(username=data.get("participant"))
             user2=request.user
@@ -24,7 +26,7 @@ def access_or_create_conversation(request: HttpRequest):
             )
         else:
             object,is_created=IndividualChats.get_or_create_indivisual_Chat(user1=user1,user2=user2)
-            print(object,is_created)
+            # print(object,is_created)
             if not is_created:
                 other_user=object.get_other_participant(request.user)
                 chat_details={"chat_id":object.chat_id,
@@ -35,8 +37,8 @@ def access_or_create_conversation(request: HttpRequest):
                 messages=get_messages(request,chat_id=object.chat_id)
                 return messages
 
-# create groups here
-# endpoint-
+# create new groups here
+# endpoint-{{baseurl}}/messaging/createGroup/
 @csrf_exempt
 @login_required
 def create_group(request:HttpRequest):
@@ -89,24 +91,9 @@ def create_group(request:HttpRequest):
                             return JsonResponse(user,status=status.HTTP_304_NOT_MODIFIED)
                         
             return JsonResponse({"Messsage":"Group created successfully"},status=status.HTTP_201_CREATED)
-
-@login_required
-def show_created_groups(request: HttpRequest):
-    verify_method=verifyGet(request)
-    if verify_method:
-        return verify_method
-    # Groups=request.user.created_groups.orderby("created_at")
-    groups=GroupChats.objects.filter(created_by=request.user).order_by("-created_at")
-    info=[{
-        "group_id":g.group_id,
-        "total_participant":g.participants,
-        "name":g.group_name,
-        "description":g.description,
-        "created_at":get_created_time_format(g.created_at)
-    } for g in groups]
     
-    return JsonResponse(info,safe=False)
-    
+# fetches group members from an existing group_id
+# endpoint-{{baseurl}}/messaging/showGroupMembers/{group_id}/
 @login_required
 def api_to_get_group_members(request: HttpRequest,group_id:str):
     verify_method=verifyGet(request)
@@ -115,34 +102,8 @@ def api_to_get_group_members(request: HttpRequest,group_id:str):
     data=get_group_members(group_id=group_id)
     return data
 
-@csrf_exempt
-@login_required
-def update_group(request: HttpRequest,group_id:str):
-    verify_method=verifyPatch(request)
-    if verify_method:
-            return verify_method
-    try:
-        group_obj:GroupChats|Http404=get_object_or_404(GroupChats,group_id=group_id)
-        if request.user==group_obj.created_by:
-            fields=["group_name","description"]
-            data=load_data(request=request)
-            for i in fields:
-                field_value=data.get(i)
-                if not field_value:
-                    return JsonResponse({"message":f"{i} is missing"},status=status.HTTP_406_NOT_ACCEPTABLE)
-                else:
-                    setattr(group_obj,"group_name",field_value)
-        else:
-            raise PermissionDenied("Not Allowed")
-    except Http404 as e:
-        print(e)
-        return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
-    except PermissionDenied as e:
-        print(e)
-        return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
-    else:
-        return JsonResponse({"Messsage":"Group details updated successfully"},status=status.HTTP_201_CREATED)
-    
+# endpoint-{{baseurl}}/messaging/addUser/{group_id}/{user_id}/
+# adds a user into a group from the list of available users.
 @csrf_exempt
 @login_required
 def add_user(request: HttpRequest,group_id:str):
@@ -184,6 +145,7 @@ def add_user(request: HttpRequest,group_id:str):
         return JsonResponse({"Message":"user added Successfully"},status=status.HTTP_201_CREATED)
     
 # endpoint-{{baseurl}}/messaging/deleteUser/{group_id}/{user_id}/
+# deletes a selected member from a group
 @csrf_exempt
 @login_required
 def delete_user(request: HttpRequest,group_id:str,user_id:str):
@@ -232,6 +194,8 @@ def delete_user(request: HttpRequest,group_id:str,user_id:str):
     else:
         return JsonResponse(message,status=status.HTTP_200_OK)
 
+# endpoint-{{baseurl}}/messaging/deleteGroup/<slug:group_id}/
+# Deletes a already created group
 @csrf_exempt
 @login_required
 def delete_group(request: HttpRequest,group_id:str):
@@ -251,8 +215,8 @@ def delete_group(request: HttpRequest,group_id:str):
     except PermissionDenied:
         return JsonResponse({"message":"you cannot delete a Group."},status=status.HTTP_403_FORBIDDEN)
 
-# The above code is a Python Django application that handles sending and retrieving messages in a chat
-# application. Here is a breakdown of the main functionalities:
+# Post a message from logged-in user in a group or individual conversation
+# endpoint-{{baseurl}}/messaging/postMessages/{chat_id}/
 @csrf_exempt
 @login_required
 def post_message(request,chat_id:str):
@@ -289,6 +253,8 @@ def post_message(request,chat_id:str):
 
     return JsonResponse({"message":"Message sent successfully"},status=status.HTTP_201_CREATED)
 
+# fetch chats from a conversation
+# endpoint-{{baseurl}}/messaging/getMessages/{chat_id}/
 @login_required
 def get_chats(request: HttpRequest,chat_id:str):
     request_method=verifyGet(request)
@@ -296,6 +262,7 @@ def get_chats(request: HttpRequest,chat_id:str):
         return request_method
     return get_messages(request=request,chat_id=chat_id)
 
+# load groups and individual chat apis
 @login_required
 def load_groups_and_chats(request: HttpRequest):
     verify_method=verifyGet(request)
@@ -306,8 +273,10 @@ def load_groups_and_chats(request: HttpRequest):
     groups_info=[{
         "group_id":g.groupchat.group_id,
         "group_name":g.groupchat.group_name,
+        "total_participant":g.groupchat.participants,
         "created_by":get_users_Name(g.groupchat.created_by),
-        "description":g.groupchat.description
+        "description":g.groupchat.description,
+        "created_at":get_created_time_format(g.groupchat.created_at)
     } for g in groups]
     chats_info=[{
         "chat_id":c.chat_id,
@@ -316,8 +285,10 @@ def load_groups_and_chats(request: HttpRequest):
     response={"Group_info":groups_info,"chats_info":chats_info}
     return JsonResponse(response,safe=False)
 
-# Create your views here.
 
+# ************************************ Un-used apis **************************************************
+
+# Find a specific conversation using Name of the another participant.
 @login_required
 def search_or_find_conversation(request:HttpRequest):
     verify_method=verifyGet(request)
@@ -332,5 +303,54 @@ def search_or_find_conversation(request:HttpRequest):
     
     return JsonResponse(list(profiles),safe=False)
 
-def delete_message(request: HttpRequest,chat_id:str,msg_id:int):
-    ...
+# Deletes a particular msg
+@login_required
+def delete_message(request: HttpRequest,chat_id:str,msg_id:int):...
+
+# updates other group information
+@csrf_exempt
+@login_required
+def update_group(request: HttpRequest,group_id:str):
+    verify_method=verifyPatch(request)
+    if verify_method:
+            return verify_method
+    try:
+        group_obj:GroupChats|Http404=get_object_or_404(GroupChats,group_id=group_id)
+        if request.user==group_obj.created_by:
+            fields=["group_name","description"]
+            data=load_data(request=request)
+            for i in fields:
+                field_value=data.get(i)
+                if not field_value:
+                    ...
+                    # return JsonResponse({"message":f"{i} is missing"},status=status.HTTP_406_NOT_ACCEPTABLE)
+                else:
+                    setattr(group_obj,"group_name",field_value)
+        else:
+            raise PermissionDenied("Not Allowed")
+    except Http404 as e:
+        print(e)
+        return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    except PermissionDenied as e:
+        print(e)
+        return JsonResponse({"message":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    else:
+        return JsonResponse({"Messsage":"Group details updated successfully"},status=status.HTTP_201_CREATED)
+    
+# Shows Created Groups by a logged-in user 
+@login_required
+def show_created_groups(request: HttpRequest):
+    verify_method=verifyGet(request)
+    if verify_method:
+        return verify_method
+    # Groups=request.user.created_groups.orderby("created_at")
+    groups=GroupChats.objects.filter(created_by=request.user).order_by("-created_at")
+    info=[{
+        "group_id":g.group_id,
+        "total_participant":g.participants,
+        "name":g.group_name,
+        "description":g.description,
+        "created_at":get_created_time_format(g.created_at)
+    } for g in groups]
+    
+    return JsonResponse(info,safe=False)

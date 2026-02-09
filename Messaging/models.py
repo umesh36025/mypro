@@ -14,7 +14,7 @@ def generate_group_id(length=5):
     return chat_id+"".join(random.choices(chars, k=length))
 
 class GroupChats(models.Model):
-    group_id=models.CharField(verbose_name="group_id",primary_key=True)
+    group_id = models.CharField(verbose_name="group_id",primary_key=True)
     group_name = models.CharField(max_length=100, blank=True,db_column="group_name",unique=True)
     description=models.TextField(max_length=200,null=True,verbose_name="description",db_column="description_of_group")
     participants=models.SmallIntegerField(default=1)
