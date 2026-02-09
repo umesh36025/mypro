@@ -55,7 +55,7 @@ def get_user_role(user=User):
     try:
         role=Profile.objects.get(Employee_id=user).Role
     except Exception as e:
-        return {"message":f"{e}"}
+        return None
     else:
         return role.role_name
     

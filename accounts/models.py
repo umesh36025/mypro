@@ -47,7 +47,7 @@ class Profile(models.Model):
     class Meta:
         verbose_name = "Employee Profile"
         verbose_name_plural = "Employees Profile"
-        ordering=["-Name"]
+        ordering=["Name"]
         indexes = [models.Index(fields=['Role',"Designation"]),]
         
     def __str__(self):

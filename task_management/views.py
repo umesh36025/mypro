@@ -42,7 +42,7 @@ def create_task(request:HttpRequest):
         # print(body_data)
         # body_data["assigned_to"]=u_profile.Employee_id
     except Http404 as e:
-        # print(e)
+        print(e)
         return JsonResponse({"message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
     except Exception as e:
         # print(e)
@@ -176,7 +176,7 @@ def delete_task(request: HttpRequest,task_id:int):
         user = request.user
         task=get_task_object(task_id=task_id)
         role=get_user_role(request.user)
-        if request.user!=task.created_by and (isinstance(role,str) and (role!="MD" and role!="TeamLead")):
+        if request.user!=task.created_by and role and (role!="MD" and role!="TeamLead"):
             raise PermissionDenied("Not allowed")
     except PermissionDenied:
         return JsonResponse({"error": "You are not authorised to delete the task"}, status=status.HTTP_403_FORBIDDEN)

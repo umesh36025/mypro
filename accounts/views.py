@@ -161,22 +161,18 @@ def user_login(request:HttpRequest):
     try:
         if not u or not p:
             return JsonResponse({"message":"username or password is missing"},status=status.HTTP_204_NO_CONTENT)
+    
+        user= authenticate(request,username=u,password=p)
+        if not user:
+                return  JsonResponse({"messege":"Incorrect userID/Password,Try again"},status=status.HTTP_400_BAD_REQUEST)
         else:
-            # print(u,p)
-            user= authenticate(request,username=u,password=p)
-            if not user:
-                    return  JsonResponse({"messege":"Incorrect userID/Password,Try again"},status=status.HTTP_406_NOT_ACCEPTABLE)
-            else:
-                login(request,user)
-                user_role=get_user_role(user)
-                if isinstance(user_role,str):
-                    return  JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":user_role},status=status.HTTP_200_OK)
-                elif user.is_superuser:
-                    return  JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":"Admin"},status=status.HTTP_200_OK)
-                else:
-                    return JsonResponse(user_role,status=status.HTTP_404_NOT_FOUND)
+            login(request,user)
+            user_role=get_user_role(user)
+            if user_role:
+                return  JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":user_role},status=status.HTTP_200_OK)
+            return JsonResponse({"messege":"You are logged in","username":f"{user.username}","Role":None},status=status.HTTP_206_PARTIAL_CONTENT)
     except Exception as e:
-                    return JsonResponse({"messege":f"{e}"})
+                    return JsonResponse({"messege":f"{e}"},status=status.HTTP_403_FORBIDDEN)
 
 # Get logged_in users Profile data
 @login_required
@@ -223,9 +219,9 @@ def update_profile(request: HttpRequest,username):
         profile_values={}
         try:
             data=request.POST
-            files=request.FILES
+            # return HttpResponse(data.items())
             for i in fields:
-                field_value=files.get(i)
+                field_value=data.get(i)
                 if not field_value and i not in not_required_fields:
                     # print("error1")
                     return JsonResponse({"messege":f"{i} is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -379,17 +375,23 @@ def update_photo(request: HttpRequest,username:str):
     else:
         return JsonResponse({"messege":f"{users_name}'s Photo updated successfully"},status=status.HTTP_205_RESET_CONTENT)
 
-   
+@admin_required
 def FetchImage(request: HttpRequest,username:str):
-    try:
-        user_obj=get_object_or_404(User,username=username)
-        user_profile=get_user_profile_object(user_obj)
-        if user_profile.Photo_link:
-            ...
-        return JsonResponse({"message":"File not found"},status=status.HTTP_404_NOT_FOUND)
-    except Http404 as e:
-        print(e)
-        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        print(e)
-        return  JsonResponse({"messege":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)
+    # baseurl="http://localhost:8000/"
+    # try:
+    #     user_obj=get_object_or_404(User,username=username)
+    #     user_profile=get_user_profile_object(user_obj)
+    #     photo_link=user_profile.Photo_link
+    #     if photo_link:
+    #         response=requests.get(url=f"{baseurl}media/{photo_link}")
+    #         response.headers["Content-Type"]="image/png"
+    #         return response
+    #     return JsonResponse({"message":"File not found"},status=status.HTTP_404_NOT_FOUND)
+    # except Http404 as e:
+    #     print(e)
+    #     return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    # except Exception as e:
+    #     print(e)
+    #     return  JsonResponse({"messege":f"{e}"},status=status.HTTP_501_NOT_IMPLEMENTED)
+    return HttpResponse("None")
+    ...
