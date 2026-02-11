@@ -7,7 +7,12 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         # Departments.objects.create(dept_name="None")
         # Functions.objects.create(function="None")
-        # Designation.objects.filter(designation="add")
+        # Designation.objects.create(designation="GIS")
+        # Designation.objects.create(designation="DevOPS")
+        # Designation.objects.create(designation="Frontend Developer")
+        # Designation.objects.create(designation="Marketing and Sales Executive")
+        # Designation.objects.create(designation="Full Stack Developer")
+        # Designation.objects.filter(designation="Designer Engineer").update(designation="Design Engineer")
         # Roles.objects.create(role_name="HR")
         # Branch.objects.create(branch_name="None")
 

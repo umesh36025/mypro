@@ -18,7 +18,7 @@ class TaskStatus(models.Model):
         verbose_name_plural = "task_statuses"
 
 class Task(models.Model):
-    task_id=models.BigAutoField(primary_key=True,verbose_name="task_id",auto_created=True)
+    task_id=models.BigAutoField(primary_key=True,verbose_name="task_id",auto_created=True,db_index=True)
     title = models.CharField(max_length=200,null=False)
     description = models.TextField(max_length=500,verbose_name="task_description",default=None,null=True)
 
@@ -41,11 +41,11 @@ class Task(models.Model):
         ordering=["-created_by"]
 
     def __str__(self):
-        return f"task-id-{self.task_id}"
+        return f"task-{self.title}"
     
 class TaskAssignies(models.Model):
     task=models.ForeignKey(Task,db_column="task_id",null=False,on_delete=models.CASCADE,related_name="tasks")
-    assigned_to=models.ForeignKey(User,db_column="assigned_to",null=False,on_delete=models.CASCADE,to_field="username",related_name="Tasks_assigned")
+    assigned_to=models.ForeignKey(User,db_column="assigned_to",null=False,on_delete=models.CASCADE,to_field="username",related_name="Tasks_assigned",db_index=True)
     class Meta:
         db_table='task_management"."tasksAssignee'
         verbose_name="taskAssignee"
@@ -53,11 +53,11 @@ class TaskAssignies(models.Model):
         unique_together = ("task", "assigned_to")
         ordering=["task"]
 
-    def __str__(self):
-        if self.task:
-            total=TaskAssignies.objects.filter(task=self.task).count()
-            return f"task-id:{self.task.task_id}\ntotal_assignees:{total}"
-        return "None"
+    # def __str__(self):
+        # if self.task:
+            # total=TaskAssignies.objects.filter(task=self.task).count()
+            # return f"task-id:{self.task.task_id}\ntotal_assignees:{total}"
+        # return "None"
     
 class TaskCreateAndEditLogs(models.Model):
     task=models.OneToOneField(Task, verbose_name=("task_id"), on_delete=models.CASCADE,db_column="task_id",primary_key=True,related_name="task_edit_logs")

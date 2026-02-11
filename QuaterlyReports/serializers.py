@@ -3,25 +3,27 @@ from .models import Functions, FunctionsGoals, ActionableGoals,FunctionsEntries
 from task_management.models import TaskStatus
 
 class ActionableGoalSerializer(serializers.ModelSerializer):
+    Actionable_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = ActionableGoals
-        fields = ['id', 'purpose', 'grp']
+        fields = ['Actionable_id', 'purpose', 'grp']
 
 class FunctionGoalSerializer(serializers.ModelSerializer):
     # This fetches all ActionableGoals related to this FunctionGoal
     actionable_goals = ActionableGoalSerializer(source='actionablegoals_set', many=True, read_only=True)
-
+    Functional_goal_id = serializers.IntegerField(source='id', read_only=True)
     class Meta:
         model = FunctionsGoals
-        fields = ['id', 'Maingoal', 'actionable_goals']
+        fields = ['Functional_goal_id', 'Maingoal', 'actionable_goals']
 
 class FunctionDetailSerializer(serializers.ModelSerializer):
     # This fetches all FunctionGoals related to this Function
     functional_goals = FunctionGoalSerializer(source='functionsgoals_set', many=True, read_only=True)
+    Functional_id = serializers.IntegerField(source='id', read_only=True)
 
     class Meta:
         model = Functions
-        fields = ['id', 'function', 'functional_goals']
+        fields = ['Functional_id', 'function', 'functional_goals']
         
         
 class FunctionsEntriesSerializer(serializers.ModelSerializer):

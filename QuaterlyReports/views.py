@@ -253,13 +253,13 @@ def get_functions_and_actionable_goals(request: HttpRequest):
             actionable_goals = []
             for a_goal in f_goal.actionablegoals_set.all():
                 actionable_goals.append({
-                    "id": a_goal.id,
+                    "actionable_id": a_goal.id,
                     "purpose": a_goal.purpose,
                     "grp_id": a_goal.grp.grp  # Accessing foreign key ID directly
                 })
 
             functional_goals_list.append({
-                "id": f_goal.id,
+                "functional_id": f_goal.id,
                 "main_goal": f_goal.Maingoal,
                 "actionable_goals": actionable_goals
             })
@@ -291,14 +291,9 @@ def entry_list_create(request: HttpRequest):
 
         # ADD ENTRY (Create)
         elif request.method == 'POST':
-            # is_many = isinstance(request.data, list)
-            print(request.data)
             serializer = FunctionsEntriesSerializer(data=request.data)
-            # serializer = FunctionsEntriesSerializer(data=request.data)
-            # print(serializer)
             if serializer.is_valid():
-                # Injecting the current user as the Creator
-                print(request.user)
+                # print(request.user)
                 serializer.save(Creator=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response("error occured", status=status.HTTP_400_BAD_REQUEST)
