@@ -26,7 +26,7 @@ load_dotenv(f"{BASE_DIR}/.env")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("Debug",True)
+# DEBUG = os.getenv("Debug",True)
 
 ALLOWED_HOSTS = ["*","localhost:3000/","localhost:3000","employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com/","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000","http://192.168.41.55:3000/"]
                 #  "127.0.0.1:8000/","http://192.168.41.120:3000/","http://192.168.41.120:3001/","http://192.168.41.120:3000","http://192.168.41.120:3001","192.168.41.120:3000/","192.168.41.120:3001/*"]
@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "events",
     "project",
     "QuaterlyReports",
+    "notifications",
     "adminpanel",
     "channels",
     "maintenance",
@@ -126,7 +127,7 @@ DATABASES =  {
         "HOST": os.getenv("POSTGRES_HOST"),
         "PORT": os.getenv("POSTGRES_PORT"),
         "OPTIONS":{
-            'options':'-c search_path=project,quatery_reports,login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
+            'options':'-c search_path=notifications,project,quatery_reports,login_details,messaging,task_management,team_farm,team_infra,team_interns,team_management,public'
         },
          'CONN_MAX_AGE': 60
     }
@@ -193,8 +194,10 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 if os.getenv("is_developement")=="True":
+    DEBUG=True
     ...
 else:
+    DEBUG=False
     CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
     SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",False)
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE","None")

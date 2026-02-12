@@ -36,9 +36,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_chat_name,self.channel_name)
 
     async def receive(self, text_data):
-        message = text_data.get("message")
-        message=text_data
+        print(text_data)
+        data = json.loads(text_data)
+        message = data.get("message")
+        # message=text_data
         sender = self.scope["user"]
+        print(sender)
 
         if not message:
             return JsonResponse({"message":"message Not Found"},status=status.HTTP_404_NOT_FOUND)
@@ -60,9 +63,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         # Send message to WebSocket
-        print(event)
+        # print(type(event))
         await self.send(text_data=json.dumps({
-            # "sender": event["sender"],
+            "sender": event["sender"],
             "message": event["message"]
         }))
 
@@ -79,7 +82,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # Individual Chat
             else:
                 chat = await IndividualChats.objects.aget(chat_id=self.chat_id)
-                IndividualMessages.objects.create(chat=chat,sender=sender,content=message)
+                msg_obj=IndividualMessages.objects.create(chat=chat,sender=sender,content=message)
                 
         except Http404 as e:
             print(e)

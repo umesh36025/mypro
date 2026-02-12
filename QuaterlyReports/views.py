@@ -321,7 +321,7 @@ def entry_list_create(request: HttpRequest):
         return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PUT', 'DELETE',"PATCH"])
-@permission_classes([IsAuthenticated, EntryPermission]) 
+@permission_classes([IsAuthenticated, EntryPermission])
 def entry_detail_update_delete(request, id):
     try:
         entry = FunctionsEntries.objects.get(pk=id)
@@ -342,7 +342,7 @@ def entry_detail_update_delete(request, id):
         # DELETE ENTRY
         elif request.method == 'DELETE':
             entry.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({"message":"entry deleted successfully"},status=status.HTTP_202_ACCEPTED)
     
     except FunctionsEntries.DoesNotExist:
         return Response({'error': 'Entry not found'}, status=status.HTTP_404_NOT_FOUND)

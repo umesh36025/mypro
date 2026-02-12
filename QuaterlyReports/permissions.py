@@ -9,7 +9,7 @@ class EntryPermission(permissions.BasePermission):
             return request.user.is_authenticated
 
         # 2. POST logic: Deny MD, allow Admin and others
-        if request.method in ['POST', "PUT","PATCH"]:
+        if request.method in ['POST', "PUT","PATCH","DELETE"]:
             # Assuming you have a 'role' attribute on your User or Profile
             # Or checking group membership
             is_md = get_user_role(user=request.user)=="MD"

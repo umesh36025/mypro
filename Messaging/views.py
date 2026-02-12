@@ -219,7 +219,7 @@ def delete_group(request: HttpRequest,group_id:str):
 # endpoint-{{baseurl}}/messaging/postMessages/{chat_id}/
 @csrf_exempt
 @login_required
-def post_message(request,chat_id:str):
+def post_message(request: HttpRequest,chat_id:str):
     verify_method=verifyPost(request)
     if verify_method:
         return verify_method
@@ -229,14 +229,14 @@ def post_message(request,chat_id:str):
     message=data.get("Message")
     if not message:
         return JsonResponse({"message":"Message is empty"},status=status.HTTP_204_NO_CONTENT)
-    is_group=check_group_or_chat(chat_id=chat_id)
+    is_group=check_group_or_chat(id=chat_id)
     if is_group:
         try:
             chat_obj=get_group_object(group_id=chat_id)
             if not isinstance(chat_obj,GroupChats):
                 raise PermissionDenied("Invalid Group_id")
         except:
-            return chat_obj
+            return  JsonResponse({"message":f"{chat_obj}"},status=status.HTTP_400_BAD_REQUEST)
         else:
             GroupMessages.objects.create(group=chat_obj,sender=sender,content=message).save()
             chat_obj.save()

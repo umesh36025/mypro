@@ -40,8 +40,8 @@ def get_individual_chat_object(chat_id:int):
     else:
         return chat
     
-def check_group_or_chat(chat_id,is_group=False):
-    if chat_id[0]=="G":
+def check_group_or_chat(id:str):
+    if id.startswith("G"):
         is_group=True
     else:
         is_group=False
@@ -63,9 +63,8 @@ def get_messages(request:HttpRequest,chat_id:str):
             is_group=True
             group_obj= get_object_or_404(GroupChats, group_id=chat_id)
         except Http404 as e:
-            print(e)
+            # print(e)
             is_group=False
-            # return JsonResponse({"message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
         finally:
             if is_group:
                 participants=GroupMembers.objects.filter(groupchat=group_obj).select_related("participant")
