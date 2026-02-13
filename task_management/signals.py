@@ -60,27 +60,27 @@ def task_edit_and_create_logs(sender,created,instance:Task, **kwargs):
 def task_status_change_logs(sender,instance:Task, **kwargs):
     ...
 
-@receiver(post_save, sender=Task)
-def task_assigned_notification(sender, instance, created, **kwargs):
+# @receiver(post_save, sender=Task)
+# def task_assigned_notification(sender, instance:Task, created, **kwargs):
 
-    if created and instance.assigned_to:
+#     if created and instance.assignees:
 
-        notif = Notification.objects.create(
-            recipient=instance.assigned_to,
-            notification_type="TASK",
-            title="New Task Assigned",
-            message=f"You have been assigned: {instance.title}"
-        )
+#         notif = Notification.objects.create(
+#             recipient=instance.assignees,
+#             notification_type="TASK",
+#             title="New Task Assigned",
+#             message=f"You have been assigned: {instance.title}"
+#         )
 
-        # realtime push
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"user_{instance.assigned_to.id}",
-            {
-                "type": "send_notification",
-                "title": notif.title,
-                "message": notif.message,
-                "type": notif.notification_type,
-            }
-        )
+#         # realtime push
+#         channel_layer = get_channel_layer()
+#         async_to_sync(channel_layer.group_send)(
+#             f"user_{instance.assigned_to.id}",
+#             {
+#                 "type": "send_notification",
+#                 "title": notif.title,
+#                 "message": notif.message,
+#                 "type": notif.notification_type,
+#             }
+#         )
 
