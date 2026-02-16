@@ -6,8 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DJANGO_SETTINGS_MODULE=ems.settings \
-    PORT=8000
+    DJANGO_SETTINGS_MODULE=ems.settings
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     libpq-dev \
     curl \
+    netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
 # Create application user
@@ -32,8 +32,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
-# Copy all application code (note: .dockerignore may exclude some files)
-# We'll handle this by temporarily ignoring .dockerignore for critical dirs
+# Copy all application code
 COPY --chown=appuser:appuser . .
 
 # Remove virtual environment directories if they were copied
@@ -50,13 +49,12 @@ USER appuser
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear || echo "Static files collection skipped"
 
-# Expose port
+# Expose port (Railway will set PORT env variable)
 EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/ || exit 1
 
-# Run migrations and start server
-CMD python manage.py migrate --noinput && \
-    daphne -b 0.0.0.0 -p ${PORT:-8000} ems.asgi:application
+# Startup script
+CMD sh -c "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p ${PORT:-8000} ems.asgi:application"
