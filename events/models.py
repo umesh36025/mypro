@@ -44,6 +44,7 @@ class BookSlot(models.Model):
     class Meta:
         db_table='events"."Slots'
         verbose_name="Slot"
+        ordering=["-date","-created_at"]
         
     def __str__(self):
         return self.meeting_title

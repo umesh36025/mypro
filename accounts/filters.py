@@ -2,14 +2,16 @@ from django.http import HttpRequest, JsonResponse
 from accounts.models import *
 from datetime import date,datetime,timedelta
 from rest_framework import status
+from django.db import DatabaseError, transaction
 
 # get an user's "Profile" object from the user's "User" object
 def get_user_profile_object(user:User|None):
     try:
         if user:
-            profile=Profile.objects.get(Employee_id=user)
+            with transaction.atomic():
+                profile=Profile.objects.get(Employee_id=user)
             return profile
-    except Profile.DoesNotExist as e:
+    except Exception as e:
         return None
     else:
         return None
@@ -17,7 +19,8 @@ def get_user_profile_object(user:User|None):
 # get an user's "User" object from an username
 def get_user_object(username:str):
     try:
-        user=User.objects.get(username=username)
+        with transaction.atomic():
+            user=User.objects.get(username=username)
     except Exception as e:
         return {"message":f"{e}"}
     else:
@@ -26,7 +29,8 @@ def get_user_object(username:str):
 #get a "Role" object from role_name 
 def get_role_object(role=str):
     try:
-        user_role=Roles.objects.get(role_name=role)
+        with transaction.atomic():
+            user_role=Roles.objects.get(role_name=role)
     except Exception as e:
         return {"message":f"{e}"}
     else:
@@ -35,7 +39,8 @@ def get_role_object(role=str):
 # get a "Designation" object from an input designation
 def get_designation_object(designation:str):
     try:
-        user_designation=Designation.objects.get(designation=designation)
+        with transaction.atomic():
+            user_designation=Designation.objects.get(designation=designation)
     except Exception as e:
         return {"message":f"{e}"}
     else:
@@ -44,7 +49,8 @@ def get_designation_object(designation:str):
 # get a "Branch" object from a branch name
 def get_branch_object(branch=str):
     try:
-        user_branch=Branch.objects.get(branch_name=branch)
+        with transaction.atomic():
+            user_branch=Branch.objects.get(branch_name=branch)
     except Exception as e:
         return {"message":f"{e}"}
     else:
@@ -53,7 +59,8 @@ def get_branch_object(branch=str):
 # get an user's "Role" from "User" objects
 def get_user_role(user=User):
     try:
-        role=Profile.objects.get(Employee_id=user).Role
+        with transaction.atomic():
+            role=Profile.objects.get(Employee_id=user).Role
     except Exception as e:
         return None
     else:
@@ -64,17 +71,19 @@ def get_user_role(user=User):
 # Use in the dropdown as for designations.
 def get_designations(request:HttpRequest):
     data=request.GET
-    # print(data)
-    if data.get("Role")=="MD" or data.get("Role")=="Admin":
+    role=data.get("Role")
+    if role in ["MD","Admin"]:
         designations=[{}]
     else:
-        designations=Designation.objects.all().values("designation")
+        with transaction.atomic():
+            designations=Designation.objects.all().values("designation")
     # print(designations)
     return JsonResponse(list(designations),safe=False)
 
 def get_department_obj(dept=str):
     try:
-        dept_obj=Departments.objects.get(dept_name=dept)
+        with transaction.atomic():
+            dept_obj=Departments.objects.get(dept_name=dept)
     except Exception as e:
         print(e)
         return JsonResponse({"Message":f"{e}"},status=status.HTTP_403_FORBIDDEN)
@@ -84,18 +93,21 @@ def get_department_obj(dept=str):
 # endpoint={{baseurl}}/accounts/getRoles/.
 # use in the dropdown of roles.
 def get_roles(request: HttpRequest):
-    roles=Roles.objects.exclude(role_id=1).values("role_name")
-    return JsonResponse(list(roles),safe=False)
+    with transaction.atomic():
+        roles=Roles.objects.exclude(role_id=1).values("role_name")
+    return JsonResponse(list(roles),safe=False,status=status.HTTP_200_OK)
 
 # Get all respective departments or branches in an organisation.
 # endpoint={{baseurl}}/accounts/getBranch/
 # use in the dropdown of branches.
 def get_branches(request: HttpRequest):
     data=request.GET
-    if data.get("Role")=="MD" or data.get("Role")=="Admin":
+    role=data.get("Role")
+    if role in ["MD","Admin"]:
         branch=[{}]
     else:
-        branch=Branch.objects.all().values("branch_name")
+        with transaction.atomic():
+            branch=Branch.objects.all().values("branch_name")
     return JsonResponse(list(branch),safe=False)
 
 # empty
@@ -108,7 +120,7 @@ def get_role_wise_count(request:HttpRequest):
     
 def get_users_Name(user:User|None):
     if isinstance(user,User):
-        profile_obj=get_user_profile_object(user)        
+        profile_obj=get_user_profile_object(user)     
         return profile_obj.Name if profile_obj else None
     return None
 
@@ -125,9 +137,17 @@ def get_departments_and_functions(request: HttpRequest):
     if role in ["Admin","MD"]:
         response=[{}]
     else:
-        departments=Departments.objects.all()
-        functions=Functions.objects.all()
+        # departments=Departments.objects.all().values("dept_name")
+        # functions=Functions.objects.all().values("function")
+        try:
+            with transaction.atomic():
+                departments=Departments.objects.all()
+                functions=Functions.objects.all()
+        except DatabaseError as e:
+            return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         response={"Departments":[i.dept_name for i in departments],"functions":[j.function for j in functions]}
+        
+        # response={"departments":list(departments),"functions":list(functions)}
     return JsonResponse(response,safe=False,status=status.HTTP_200_OK)
 
 def completed_years_and_days(start_date: date) -> str:

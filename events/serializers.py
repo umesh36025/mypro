@@ -22,7 +22,7 @@ class BookSlotSerializer(serializers.ModelSerializer):
     members = serializers.SlugRelatedField(
         many=True,
         slug_field='username',
-        queryset=User.objects.all(),write_only=True)
+        queryset=User.objects.all(),write_only=True,required=True)
     created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
     member_details = serializers.SerializerMethodField()
     creater_details = serializers.SerializerMethodField()
@@ -34,18 +34,19 @@ class BookSlotSerializer(serializers.ModelSerializer):
             'created_at','member_details',"creater_details","created_by"
         ]
         
-    def get_member_details(self, obj):
+    def get_member_details(self, obj:BookSlot):
         # Accesses the ManyToMany relationship
-        return [
-            {
-                "username": user.username,
-                "full_name": get_users_Name(user) # fallback if name is empty
-            } 
-            for user in obj.members.all()]
+        # return [
+        #     {
+        #         "username": user.username,
+        #         "full_name": get_users_Name(user) # fallback if name is empty
+        #     }]
+        return list(SlotMembers.objects.select_related("slot","member").filter(slot=obj).values(full_name=F("member__accounts_profile__Name")))
         
-    def get_creater_details(self, obj):
+        
+    def get_creater_details(self, obj: BookSlot):
         return {
-                "full_name": get_users_Name(obj.created_by) # fallback if name is empty
+                "full_name": get_users_Name(user=obj.created_by) # fallback if name is empty
             }
         
     def create(self, validated_data):

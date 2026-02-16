@@ -32,11 +32,12 @@ def create_employee_login(request: HttpRequest):
                         field_value=files.get(i)
                     
                     if not field_value and i not in not_required_field:
-                        print("error1")
+                        # print("error1")
                         return JsonResponse({"messege":f"{i} is required"},status=status.HTTP_406_NOT_ACCEPTABLE)
                     elif i=="Teamlead" and field_value:
-                        teamlead_user_obj=get_object_or_404(User,username=field_value)
-                        profile_values["Teamlead"]=teamlead_user_obj
+                        with transaction.atomic():
+                            teamlead_user_obj=get_object_or_404(User,username=field_value)
+                            profile_values["Teamlead"]=teamlead_user_obj
                     elif i in not_required_field and not field_value:
                         ...
                     elif i=='Employee_id':
@@ -50,45 +51,50 @@ def create_employee_login(request: HttpRequest):
                     else:
                         profile_values[i]=field_value
     except Http404 as e:
-        print(e)
+        # print(e)
         return  JsonResponse({"messege":f"{e}"})
     except Exception as e:
-        print("error3")
+        # print("error3")
         return JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)
-    except DatabaseError as e:
-        return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         try:
-            check_user=get_user_object(username=login_values["username"])
-            if not isinstance(check_user,User):
-                user = User(**login_values)
-                user.set_password(login_values["password"])
-                user.save()
-            else:
-                user=check_user
+            with transaction.atomic():
+                check_user=get_user_object(username=login_values["username"])
+                if not isinstance(check_user,User):
+                    user = User(**login_values)
+                    user.set_password(login_values["password"])
+                    user.save()
+                else:
+                    user=check_user
         except Exception as e:
-            print("error4")
+            # print("error4")
             return JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+        except DatabaseError as e:
+            return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             try:
                 profile_values["Employee_id"]=user
                 if profile_values["Role"] not in ["MD","Admin"]:
+                    with transaction.atomic():
                         get_branch=get_object_or_404(Branch,branch_name=profile_values["Branch"])
                         get_designation=get_object_or_404(Designation,designation=profile_values["Designation"])                    
                         get_department=get_object_or_404(Departments,dept_name=profile_values["Department"])
                         get_function=get_object_or_404(Functions,function=profile_values["Function"])
-                        profile_values["Department"]=get_department
-                        profile_values["Branch"]=get_branch
-                        profile_values["Designation"]=get_designation
-                        profile_values["Function"]=get_function
-                get_role=get_object_or_404(Roles,role_name=profile_values["Role"])
-                profile_values["Role"]=get_role
-                Profile.objects.create(**profile_values)
+                    profile_values["Department"]=get_department
+                    profile_values["Branch"]=get_branch
+                    profile_values["Designation"]=get_designation
+                    profile_values["Function"]=get_function
+                with transaction.atomic():
+                    get_role=get_object_or_404(Roles,role_name=profile_values["Role"])
+                    profile_values["Role"]=get_role
+                    Profile.objects.create(**profile_values)
             except Http404 as e:
-                print(e)
+                # print(e)
                 return  JsonResponse({"messege":f"{e}"})
+            except DatabaseError as e:
+                return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             except Exception as e:
-                print(e)
+                # print(e)
                 return JsonResponse({"messege":f"{e}"})
             else:
                 return JsonResponse({"messege":"user profile created successfully"},status=status.HTTP_200_OK)
@@ -97,8 +103,8 @@ def create_employee_login(request: HttpRequest):
 @login_required
 def get_all_employees(request: HttpRequest):
     try:
-        admin_role=get_role_object(role="Admin")
-        profile_data=Profile.objects.all().select_related("Role","Designation","Branch","Department","Function","Employee_id")
+        with transaction.atomic():
+            profile_data=Profile.objects.all().select_related("Role","Designation","Branch","Department","Function","Employee_id")
         users_data=[]
         for pd in profile_data:
             role=pd.Role.role_name
@@ -208,8 +214,9 @@ def employee_dashboard(request: HttpRequest):
 def user_logout(request: HttpRequest):
     try:
         user_id=request.user.username
-        logout(request)
-        request.session.flush()
+        with transaction.atomic():
+            logout(request)
+            request.session.flush()
         return  JsonResponse({"messege":f"Logout successfully {user_id}"},status=status.HTTP_200_OK)
     except DatabaseError as e:
         return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -221,8 +228,9 @@ def update_profile(request: HttpRequest,username):
     if verify_method:
         return verify_method
     try:
-        user=get_object_or_404(User,username=username)
-        profile=Profile.objects.get(Employee_id=user)
+        with transaction.atomic():
+            user=get_object_or_404(User,username=username)
+        # profile=Profile.objects.get(Employee_id=user)
     except Http404 as e:
         print(e)
         return JsonResponse({"messege":"User Not Found. Incorrect Username Passed in the URL"},status=status.HTTP_404_NOT_FOUND)
@@ -272,7 +280,7 @@ def update_profile(request: HttpRequest,username):
             # print(profile_values)
         except Http404 as e:
                 print(e)
-                return  JsonResponse({"messege":f"{e}"})
+                return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             print(e)
             return  JsonResponse({"messege":f"{e}"},status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -280,6 +288,7 @@ def update_profile(request: HttpRequest,username):
             return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             try:
+                with transaction.atomic():
                     Profile.objects.filter(Employee_id=user).update(**profile_values)
             # except Http404 as e:
             #     print(e)
@@ -290,7 +299,7 @@ def update_profile(request: HttpRequest,username):
             except DatabaseError as e:
                 return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
-                return  JsonResponse({"messege":"user details update successfully"},status=status.HTTP_205_RESET_CONTENT)
+                return  JsonResponse({"messege":"user details update successfully"},status=status.HTTP_200_OK)
 
 @csrf_exempt
 @login_required
@@ -303,27 +312,30 @@ def changePassword(request: HttpRequest,u):
     if not new_password:
         return JsonResponse({"messege":"Password is empty"},status=status.HTTP_406_NOT_ACCEPTABLE)
     try:
-        user=get_object_or_404(User,username=u)
+        with transaction.atomic():
+            user=get_object_or_404(User,username=u)
     except Http404 as e:
         print(e)
         return  JsonResponse({"messege":f"{e}"})
     else:
-        user.password=new_password
-        user.set_password(new_password)
-        user.save(force_update=True)
+        with transaction.atomic():
+            user.password=new_password
+            user.set_password(new_password)
+            user.save(force_update=True)
         return JsonResponse({"messege":f"Password is changed to {new_password}"},status=status.HTTP_200_OK)
 
 # View Individual Employee Profile. 
 @admin_required
 def view_employee(request: HttpRequest,u):
     try:
-        user=get_object_or_404(User,username=u)
-        profile=Profile.objects.filter(Employee_id=user)
+            user=get_object_or_404(User,username=u)
+            profile=Profile.objects.filter(Employee_id=user)
     except Http404:
         return JsonResponse({"Message":"User not found.Incorrect username"},status=status.HTTP_404_NOT_FOUND)
     else:
         if profile:
-            profile_data=profile.values("Employee_id","Email_id","Designation","Date_of_birth","Date_of_join","Branch","Name","Photo_link","Role")
+            with transaction.atomic():
+                profile_data=profile.values("Employee_id","Email_id","Designation","Date_of_birth","Date_of_join","Branch","Name","Photo_link","Role")
             return JsonResponse(list(profile_data),safe=False)
         return JsonResponse([{}],safe=False)
     
@@ -391,9 +403,12 @@ def update_photo(request: HttpRequest,username:str):
     except Http404 as e:
         print(e)
         return  JsonResponse({"messege":f"{e}"},status=status.HTTP_404_NOT_FOUND)
+    except DatabaseError as e:
+            return  JsonResponse({"message":f"{e}"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         print(e)
         return  JsonResponse({"messege":f"{e}"},status=status.HTTP_304_NOT_MODIFIED)
+    
     else:
         return JsonResponse({"messege":f"{users_name}'s Photo updated successfully"},status=status.HTTP_205_RESET_CONTENT)
 
@@ -434,5 +449,3 @@ def updateUsername(request: HttpRequest,username:str):
         user_obj.update(username=new_u)
         # user_obj.save()
         return HttpResponse("username updated")
-    
-    

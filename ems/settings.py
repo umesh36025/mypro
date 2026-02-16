@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = os.getenv("Debug",True)
 
-ALLOWED_HOSTS = ["*","localhost:3000/","localhost:3000","employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com/","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000","http://192.168.41.55:3000/"]
+ALLOWED_HOSTS = ["*","employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com/","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000","http://192.168.41.55:3000/","http://192.168.41.120:3000/","http://192.168.41.120:3000"]
                 #  "127.0.0.1:8000/","http://192.168.41.120:3000/","http://192.168.41.120:3001/","http://192.168.41.120:3000","http://192.168.41.120:3001","192.168.41.120:3000/","192.168.41.120:3001/*"]
 
 REST_FRAMEWORK = {
@@ -186,15 +186,19 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://planeteye-employee-portal.onrender.com","http://localhost:8000","http://127.0.0.1:8000","http://192.168.41.55:3000",
+    "https://planeteye-employee-portal.onrender.com","http://localhost:8000","http://127.0.0.1:8000","http://192.168.41.55:3000","http://192.168.41.120:3000",
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://employee-management-system-tmrl.onrender.com","https://planeteye-employee-portal.onrender.com","http://192.168.41.55:3000",
-    "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/","http://192.168.41.55:3000/"
+    "http://localhost:3000/","http://localhost:8000/","http://127.0.0.1:8000/","http://192.168.41.55:3000/","http://192.168.41.120:3000/","http://192.168.41.120:3000",
 ]
 
 if os.getenv("is_developement")=="True":
     DEBUG=True
+    # SESSION_COOKIE_SAMESITE = "None"
+    # CSRF_COOKIE_SAMESITE = "None"
+    # CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",True)
+    # SESSION_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE",True)
     ...
 else:
     DEBUG=False

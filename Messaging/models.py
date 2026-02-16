@@ -28,7 +28,7 @@ class GroupChats(models.Model):
         db_table='Groups'
         verbose_name="Group"
         indexes=[models.Index(fields=["created_by"])]
-        ordering=["-created_at"]
+        ordering=["-last_message_at"]
         
     def __str__(self):
         return self.group_name or f"Chat-{self.created_by.accounts_profile.Name}"
@@ -70,7 +70,7 @@ class IndividualChats(models.Model):
         unique_together = ("participant1", "participant2")
         indexes=[models.Index(fields=["participant1"])]
                 #  models.Index(fields=["participant2"]),]
-        ordering=["participant1","participant2"]
+        ordering=["participant1","participant2","-last_message_at"]
         
     def get_other_participant(self, user):
         """Get the other participant in the conversation"""
@@ -142,8 +142,7 @@ class IndividualMessages(models.Model):
     updated_at=models.DateTimeField(null=True,blank=True)
     created_at=models.DateTimeField(auto_now_add=True)
     seen=models.BooleanField(default=False)
-    content=models.TextField()
-    
+    content=models.TextField()    
     class Meta:
         db_table='Chats'
         indexes=[models.Index(fields=["sender"])]

@@ -48,17 +48,17 @@ def get_Names_from_selected_role_and_desigantion(request: HttpRequest):
     if not request.user:
         return JsonResponse({"error": "login required"}, status=404)
     elif not role and not designation:
-        names=Profile.objects.all().order_by("Name").values("Name")
+        names=Profile.objects.exclude(Employee_id=request.user).order_by("Name").values("Name")
     elif role and not designation:
         passed_role=get_role_object(role=role)
-        names=Profile.objects.filter(Role=passed_role).order_by("Name").values("Name")
+        names=Profile.objects.select_related("Role").exclude(Employee_id=request.user).filter(Role=passed_role).order_by("Name").values("Name")
     elif designation and not role:
         passed_designation=get_designation_object(designation=designation)
-        names=Profile.objects.filter(Designation=passed_designation).order_by("Name").values("Name")
+        names=Profile.objects.select_related("Designation").exclude(Employee_id=request.user).filter(Designation=passed_designation).order_by("Name").values("Name")
     elif role and designation:
         passed_role=get_role_object(role=role)
         passed_designation=get_designation_object(designation=designation)
-        names=Profile.objects.filter(Role=passed_role,Designation=passed_designation).order_by("Name").values("Name")
+        names=Profile.objects.select_related("Role","Designation").exclude(Employee_id=request.user).filter(Role=passed_role,Designation=passed_designation).order_by("Name").values("Name")
     else:
         return JsonResponse({"message":"pass the correct designation or Role to filter names"}, status=status.HTTP_404_NOT_FOUND)
    except Exception as e:

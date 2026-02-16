@@ -10,9 +10,21 @@ from .models import *
 from .serializers import *
 
 class BookSlotViewSet(ModelViewSet):
-    queryset = BookSlot.objects.all()
+    queryset = BookSlot.objects.all().select_related("room","created_by","status")
     serializer_class = BookSlotSerializer
     authentication_classes = [CsrfExemptSessionAuthentication]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        param_value = self.request.GET
+        if param_value:
+            query_month=param_value.get("month")
+            query_year=param_value.get("year")
+            current_date=date.today()
+            month = query_month if query_month else current_date.month
+            year = query_year if query_year else current_date.year
+            queryset = queryset.filter(created_at__month=month,created_at__year=year)
+        return queryset
     
     def get_permissions(self):
         """
@@ -25,7 +37,7 @@ class BookSlotViewSet(ModelViewSet):
         else:
             permission_classes = [AllowAny]
             
-        return [permission() for permission in permission_classes]
+        return [permission_classes[0]()]
     
     
     def perform_create(self, serializer):

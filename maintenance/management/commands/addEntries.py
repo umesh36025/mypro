@@ -1,10 +1,11 @@
 from django.core.management.base import BaseCommand
 from accounts.models import *
- 
+from notifications.models import *
 class Command(BaseCommand):
     help = "add entries to database"
 
     def handle(self, *args, **kwargs):
+        
         # Departments.objects.create(dept_name="None")
         # Functions.objects.create(function="None")
         # Designation.objects.create(designation="GIS")
@@ -26,7 +27,12 @@ class Command(BaseCommand):
         # User.objects.filter(username="5001").update(username="50001")
         # User.objects.filter(username="5001").update(username="50001")
         # User.objects.filter(username="5001").update(username="50001")
-
+        # notification_type.objects.create(type_name="Group_message")
+        # notification_type.objects.create(type_name="private_message")
+        # notification_type.objects.create(type_name="Task_message")
+        # notification_type.objects.create(type_name="Group_Created")
+        # notification_type.objects.create(type_name="Task_Created")
+        
         # for i in ["NPD","MMR","RG","HC","IP"]:
         #     Functions.objects.create(function=i)
         
