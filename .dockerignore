@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+ems/
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# Environment files
+.env
+development.env
+
+# Documentation
+*.md
+README.md
+api_testing.md
+messaging.md
+task_management.md
+
+# CSV files
+*.csv
+
+# Media files (if not needed in image)
+# media/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
