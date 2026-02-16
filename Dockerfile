@@ -1,67 +1,62 @@
 # Multi-stage build for optimized Django application with Channels support
-# Stage 1: Builder - Install dependencies
-FROM python:3.11-slim as builder
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# Install system dependencies required for building Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    postgresql-client \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create and set working directory
-WORKDIR /app
-
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --user --no-warn-script-location -r requirements.txt
-
-# Stage 2: Runtime - Create minimal production image
 FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH=/root/.local/bin:$PATH
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DJANGO_SETTINGS_MODULE=ems.settings \
+    PORT=8000
 
-# Install runtime dependencies only
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
+    gcc \
+    g++ \
+    make \
+    postgresql-client \
+    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN useradd -m -u 1000 django && \
-    mkdir -p /app/media /app/staticfiles && \
-    chown -R django:django /app
+# Create application user
+RUN useradd -m -u 1000 appuser
 
 # Set working directory
 WORKDIR /app
 
-# Copy Python dependencies from builder stage
-COPY --from=builder /root/.local /root/.local
+# Copy requirements first for better caching
+COPY requirements.txt .
 
-# Copy application code
-COPY --chown=django:django . .
+# Install Python dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt
 
-# Create necessary directories with proper permissions
-RUN chown -R django:django /app/media /app/staticfiles
+# Copy all application code (note: .dockerignore may exclude some files)
+# We'll handle this by temporarily ignoring .dockerignore for critical dirs
+COPY --chown=appuser:appuser . .
+
+# Remove virtual environment directories if they were copied
+RUN rm -rf /app/venv /app/env /app/ENV /app/.venv /app/ems/Lib /app/ems/Scripts /app/ems/Include /app/ems/pyvenv.cfg
+
+# Create necessary directories and set permissions
+RUN mkdir -p /app/media /app/staticfiles && \
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app
 
 # Switch to non-root user
-USER django
+USER appuser
 
-# Expose port for Daphne (ASGI server)
+# Collect static files
+RUN python manage.py collectstatic --noinput --clear || echo "Static files collection skipped"
+
+# Expose port
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000', timeout=5)" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/ || exit 1
 
-# Default command - run with Daphne for WebSocket support
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "ems.asgi:application"]
+# Run migrations and start server
+CMD python manage.py migrate --noinput && \
+    daphne -b 0.0.0.0 -p ${PORT:-8000} ems.asgi:application
