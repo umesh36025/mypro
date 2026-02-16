@@ -9,7 +9,7 @@ dist/
 build/
 *.egg
 
-# Virtual environments - exclude the venv inside ems folder
+# Virtual environments
 ems/Lib/
 ems/Scripts/
 ems/Include/
@@ -28,8 +28,7 @@ ENV/
 
 # Environment files
 .env
-*.env
-!development.env
+development.env
 
 # Database
 *.sqlite3
@@ -43,7 +42,7 @@ db.sqlite3
 *.md
 !README.md
 
-# Media files (upload at runtime)
+# Media files
 media/
 
 # Logs
